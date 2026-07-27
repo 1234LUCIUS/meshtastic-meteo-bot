@@ -51,16 +51,18 @@ OFFICIAL_RSS_FEEDS = {
 
 # Flux RSS préfectures par département (exemples — à compléter)
 PREFECTURE_RSS_FEEDS = {
+    # --- Normandie (Priorité) ---
+    "14": ("Préfecture du Calvados", "https://www.calvados.gouv.fr/rss.xml"),
+    "27": ("Préfecture de l'Eure", "https://www.eure.gouv.fr/rss.xml"),
+    "50": ("Préfecture de la Manche", "https://www.manche.gouv.fr/rss.xml"),
+    "61": ("Préfecture de l'Orne", "https://www.orne.gouv.fr/rss.xml"),
+    "76": ("Préfecture de Seine-Maritime", "https://www.seine-maritime.gouv.fr/rss.xml"),
+    
+    # --- Autres ---
     "75": ("Préfecture de Paris", "https://www.prefecturedepolice.interieur.gouv.fr/rss.xml"),
     "13": ("Préfecture des Bouches-du-Rhône", "https://www.bouches-du-rhone.gouv.fr/rss.xml"),
     "69": ("Préfecture du Rhône", "https://www.rhone.gouv.fr/rss.xml"),
     "33": ("Préfecture de la Gironde", "https://www.gironde.gouv.fr/rss.xml"),
-    "31": ("Préfecture de la Haute-Garonne", "https://www.haute-garonne.gouv.fr/rss.xml"),
-    "06": ("Préfecture des Alpes-Maritimes", "https://www.alpes-maritimes.gouv.fr/rss.xml"),
-    "59": ("Préfecture du Nord", "https://www.nord.gouv.fr/rss.xml"),
-    "67": ("Préfecture du Bas-Rhin", "https://www.bas-rhin.gouv.fr/rss.xml"),
-    "44": ("Préfecture de Loire-Atlantique", "https://www.loire-atlantique.gouv.fr/rss.xml"),
-    "34": ("Préfecture de l'Hérault", "https://www.herault.gouv.fr/rss.xml"),
 }
 
 # URL de la carte Vigicrues

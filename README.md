@@ -1,11 +1,11 @@
-# 📡 Meshtastic Météo Bot (France)
+# 📡 Meshtastic Météo Bot (Spécial Normandie)
 
 [![Python](https://img.shields.io/badge/Python-3.9%2B-blue)](https://python.org)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Météo-France](https://img.shields.io/badge/Source-M%C3%A9t%C3%A9o--France-0078D4)](https://vigilance.meteofrance.fr)
 [![Vigicrues](https://img.shields.io/badge/Source-Vigicrues-1E90FF)](https://vigicrues.gouv.fr)
 
-Un bot Python autonome compatible **Windows**, **Linux** et **macOS** pour les réseaux **Meshtastic**. Il diffuse la météo locale, envoie des **alertes urgentes** avec reporting horaire, et publie des informations issues de **sources officielles françaises** (Météo-France, Vigicrues, Préfectures).
+Un bot Python autonome optimisé pour la **Normandie**, compatible **Windows**, **Linux** et **macOS**. Il diffuse la météo régionale, surveille les **5 départements normands** pour les alertes urgentes (météo, feux, crues) et intègre les sources officielles locales (Préfectures de Caen, Rouen, Évreux, Alençon et Saint-Lô).
 
 ---
 
@@ -87,10 +87,10 @@ Paramètres clés dans `.env` :
 MESHTASTIC_CONNECTION_TYPE=serial
 MESHTASTIC_SERIAL_PORT=/dev/ttyUSB0
 
-# Localisation par défaut
-DEFAULT_DEPARTMENT=75
-DEFAULT_LATITUDE=48.8566
-DEFAULT_LONGITUDE=2.3522
+# Localisation par défaut (Normandie / Caen)
+DEFAULT_DEPARTMENT=14
+DEFAULT_LATITUDE=49.1833
+DEFAULT_LONGITUDE=-0.37
 
 # Niveau d'alerte minimum (3=Orange, 4=Rouge)
 ALERT_TRIGGER_LEVEL=3

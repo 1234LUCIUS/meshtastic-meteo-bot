@@ -14,10 +14,10 @@ MESHTASTIC_CONNECTION_TYPE = os.getenv("MESHTASTIC_CONNECTION_TYPE", "serial").l
 MESHTASTIC_SERIAL_PORT = os.getenv("MESHTASTIC_SERIAL_PORT", "/dev/ttyUSB0")
 MESHTASTIC_TCP_HOST = os.getenv("MESHTASTIC_TCP_HOST", "localhost")
 
-# --- Paramètres météo ---
-DEFAULT_DEPARTMENT = os.getenv("DEFAULT_DEPARTMENT", "75")
-DEFAULT_LATITUDE = float(os.getenv("DEFAULT_LATITUDE", "48.8566"))
-DEFAULT_LONGITUDE = float(os.getenv("DEFAULT_LONGITUDE", "2.3522"))
+# --- Paramètres météo (Défaut : Normandie / Caen) ---
+DEFAULT_DEPARTMENT = os.getenv("DEFAULT_DEPARTMENT", "14")
+DEFAULT_LATITUDE = float(os.getenv("DEFAULT_LATITUDE", "49.1833"))
+DEFAULT_LONGITUDE = float(os.getenv("DEFAULT_LONGITUDE", "-0.37"))
 
 # --- Canaux Meshtastic ---
 BROADCAST_CHANNEL = int(os.getenv("BROADCAST_CHANNEL", "0"))
