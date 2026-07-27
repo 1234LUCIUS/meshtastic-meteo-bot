@@ -1,0 +1,61 @@
+version: "3.8"
+
+services:
+  # Bot Meshtastic Météo — connexion TCP à un nœud Meshtastic
+  meteo-bot:
+    build: .
+    container_name: meshtastic-meteo-bot
+    restart: unless-stopped
+    environment:
+      # Connexion au nœud Meshtastic (TCP)
+      - MESHTASTIC_CONNECTION_TYPE=tcp
+      - MESHTASTIC_TCP_HOST=192.168.1.100  # Adresse IP de votre nœud Meshtastic
+
+      # Localisation par défaut
+      - DEFAULT_DEPARTMENT=75
+      - DEFAULT_LATITUDE=48.8566
+      - DEFAULT_LONGITUDE=2.3522
+
+      # Canaux Meshtastic
+      - BROADCAST_CHANNEL=0
+      - ALERT_CHANNEL=0
+
+      # Intervalles (en minutes)
+      - METEO_BROADCAST_INTERVAL=360
+      - ALERT_CHECK_INTERVAL=15
+      - ALERT_REPORT_INTERVAL=60
+      - ALERT_TRIGGER_LEVEL=3
+
+      # Clé API Météo-France (optionnel)
+      # - METEOFRANCE_API_KEY=votre_clé_ici
+
+      # Logging
+      - LOG_LEVEL=INFO
+    volumes:
+      - ./logs:/app/logs
+    networks:
+      - mesh-network
+
+  # Bot Meshtastic Météo — connexion série (Raspberry Pi / Linux)
+  # Décommentez ce service pour une connexion USB/série
+  # meteo-bot-serial:
+  #   build: .
+  #   container_name: meshtastic-meteo-bot-serial
+  #   restart: unless-stopped
+  #   environment:
+  #     - MESHTASTIC_CONNECTION_TYPE=serial
+  #     - MESHTASTIC_SERIAL_PORT=/dev/ttyUSB0
+  #     - DEFAULT_DEPARTMENT=75
+  #     - DEFAULT_LATITUDE=48.8566
+  #     - DEFAULT_LONGITUDE=2.3522
+  #     - LOG_LEVEL=INFO
+  #   devices:
+  #     - /dev/ttyUSB0:/dev/ttyUSB0
+  #   volumes:
+  #     - ./logs:/app/logs
+  #   networks:
+  #     - mesh-network
+
+networks:
+  mesh-network:
+    driver: bridge
