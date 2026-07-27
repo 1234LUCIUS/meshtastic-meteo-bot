@@ -58,49 +58,60 @@ class VigilanceService:
         try:
             from meteofrance_api import MeteoFranceClient
             client = MeteoFranceClient()
-            warnings = client.get_warning_full_france()
+            
+            # Dans la v1.2.0, get_warning_full_france n'existe pas
+            # On utilise get_warning_current_phenomenons avec depth=1 pour tous les depts
+            warnings = client.get_warning_current_phenomenons(domain="france", depth=1)
 
-            if warnings and hasattr(warnings, "raw_data"):
-                data = warnings.raw_data
-                dept_alerts = data.get("product", {}).get("periods", [])
-
-                for period in dept_alerts:
-                    for timelap in period.get("timelaps", []):
-                        dept = str(timelap.get("domain_id", ""))
-                        if not dept or len(dept) > 3:
-                            continue
-
-                        max_level = 1
-                        phenomena = []
-
-                        for phenomenon in timelap.get("timelaps_items", []):
-                            level = phenomenon.get("color_id", 1)
-                            phenom_id = phenomenon.get("phenomenon_id", "")
-                            if level > max_level:
-                                max_level = level
-                            if level >= 2:
-                                phenom_name = VIGILANCE_PHENOMENA.get(
-                                    phenom_id, phenom_id
-                                )
-                                phenomena.append(phenom_name)
-
-                        if max_level >= 2:
-                            results.append({
-                                "department": dept,
-                                "max_level": max_level,
-                                "phenomena": phenomena,
-                                "summary": self._build_summary(dept, max_level, phenomena),
-                            })
-
-            return results
-
+            # Note: Dans la v1.2.0, l'objet retourné contient les phénomènes par domaine
+            # La structure est simplifiée par rapport à la version mobile full
+            if hasattr(warnings, "phenomenons_max_colors"):
+                # Si on n'a que le national, on bascule sur le fallback pour avoir le détail par département
+                # car depth=1 ne semble pas toujours retourner une liste de domaines dans cette version
+                logger.info("Données nationales reçues, passage au fallback pour les détails départementaux.")
+            
         except ImportError:
             logger.warning("meteofrance-api non disponible, utilisation du fallback.")
         except Exception as e:
             logger.error(f"Erreur meteofrance-api (alertes nationales) : {e}")
 
-        # Fallback : API portail Météo-France
-        return self._fetch_national_via_portail()
+        # Fallback : On utilise data.gouv pour avoir le détail de tous les départements sans clé API
+        return self._fetch_all_via_datagouv()
+
+    def _fetch_all_via_datagouv(self) -> list:
+        """Récupère toutes les alertes via l'API Open Data (sans limite de département)."""
+        try:
+            # On récupère tous les enregistrements récents (environ 100 départements)
+            params = {"limit": 101}
+            response = requests.get(
+                DATAGOUV_VIGILANCE_URL, params=params, timeout=REQUEST_TIMEOUT
+            )
+            response.raise_for_status()
+            data = response.json()
+            records = data.get("results", [])
+
+            results = []
+            for record in records:
+                dept = record.get("dep_code")
+                max_level = int(record.get("max_color_id", 1))
+                if max_level >= 2:
+                    phenomena = []
+                    for key, label in VIGILANCE_PHENOMENA.items():
+                        field = f"color_{key.lower()}"
+                        level = int(record.get(field, 1))
+                        if level >= 2:
+                            phenomena.append(label)
+                    
+                    results.append({
+                        "department": dept,
+                        "max_level": max_level,
+                        "phenomena": phenomena,
+                        "summary": self._build_summary(dept, max_level, phenomena),
+                    })
+            return results
+        except Exception as e:
+            logger.error(f"Erreur fallback global data.gouv : {e}")
+            return []
 
     def format_vigilance_message(self, department: str, data: Optional[dict]) -> str:
         """
