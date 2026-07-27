@@ -52,7 +52,8 @@ Un bot Python autonome optimisé pour la **Normandie**, compatible **Windows**, 
 
 ## Prérequis
 
-- **Python 3.9+**
+- **Python 3.10 ou supérieur** (Recommandé)
+  - *Note : Le bot est compatible avec Python 3.9 via la version 2.3.14 de l'API Meshtastic.*
 - Un **nœud Meshtastic** connecté en USB/Série, TCP ou BLE
 - Connexion internet pour récupérer les données météo
 
