@@ -24,6 +24,7 @@ Un bot Python autonome compatible **Windows**, **Linux** et **macOS** pour les r
 - Notification de levée d'alerte.
 
 ### Sources officielles
+- **Suivi des Feux Actifs** : Détection satellite en temps réel via la **NASA (FIRMS)**.
 - **Météo des Forêts** ([meteofrance.com/meteo-des-forets](https://meteofrance.com/meteo-des-forets)) : Niveau de danger d'incendie par département.
 - **Vigicrues** ([vigicrues.gouv.fr](https://vigicrues.gouv.fr)) : Alertes crues en temps réel.
 - **Géorisques** ([georisques.gouv.fr](https://georisques.gouv.fr)) : Risques naturels et technologiques.
@@ -41,6 +42,7 @@ Un bot Python autonome compatible **Windows**, **Linux** et **macOS** pour les r
 | `!alertes` | Vigilances Météo-France actives (département auto-détecté) |
 | `!crues` | Alertes Vigicrues nationales |
 | `!feux` | Météo des Forêts (danger incendie) |
+| `!suivi_feux` | Suivi des feux actifs (NASA satellites) |
 | `!officiel` | Informations des sources officielles |
 | `!aide` | Affiche la liste des commandes |
 | `!ping` | Vérifie que le bot est actif |
@@ -200,6 +202,7 @@ meshtastic-meteo-bot/
 |---|---|---|---|
 | Open-Meteo (AROME) | Prévisions météo | [open-meteo.com](https://open-meteo.com) | Non requise |
 | Météo-France API | Vigilance météo | [portail-api.meteofrance.fr](https://portail-api.meteofrance.fr) | Optionnelle (gratuite) |
+| NASA FIRMS | Suivi feux actifs | [firms.modaps.eosdis.nasa.gov](https://firms.modaps.eosdis.nasa.gov) | Requise (gratuite) |
 | Météo des Forêts | Danger incendie | [meteofrance.com/meteo-des-forets](https://meteofrance.com/meteo-des-forets) | Non requise |
 | Vigicrues | Alertes crues | [vigicrues.gouv.fr](https://vigicrues.gouv.fr) | Non requise |
 | Géorisques | Risques naturels | [georisques.gouv.fr](https://georisques.gouv.fr) | Non requise |

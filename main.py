@@ -59,6 +59,11 @@ def parse_args():
         help="Teste le service Météo des Forêts et affiche le résultat.",
     )
     parser.add_argument(
+        "--test-suivi-feux",
+        action="store_true",
+        help="Teste le suivi des feux actifs et affiche le résultat.",
+    )
+    parser.add_argument(
         "--ville",
         type=str,
         default="",
@@ -95,6 +100,12 @@ def run_tests(args, controller: BotController):
     if args.test_feux:
         logger.info("=== TEST MÉTÉO DES FORÊTS ===")
         result = controller.get_forest_fire_summary()
+        print("\n" + result + "\n")
+
+    if args.test_suivi_feux:
+        logger.info("=== TEST SUIVI DES FEUX ACTIFS ===")
+        from bot.config import DEFAULT_LATITUDE, DEFAULT_LONGITUDE
+        result = controller.get_active_fires_summary(DEFAULT_LATITUDE, DEFAULT_LONGITUDE)
         print("\n" + result + "\n")
 
 

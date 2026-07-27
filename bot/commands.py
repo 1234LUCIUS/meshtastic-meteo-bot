@@ -15,7 +15,8 @@ HELP_TEXT = (
     "!meteo <ville>  -> Météo d'une ville\n"
     "!alertes        -> Vigilances Météo-France\n"
     "!crues          -> Alertes Vigicrues\n"
-    "!feux           -> Météo des Forêts (incendies)\n"
+    "!feux           -> Météo des Forêts (danger)\n"
+    "!suivi_feux     -> Feux actifs (satellites)\n"
     "!officiel       -> Infos sources officielles\n"
     "!aide           -> Cette aide"
 )
@@ -41,6 +42,9 @@ class CommandParser:
             "!feux": self._cmd_feux,
             "!feu": self._cmd_feux,
             "!mdf": self._cmd_feux,
+            "!suivi_feux": self._cmd_suivi_feux,
+            "!suivifeux": self._cmd_suivi_feux,
+            "!incendie": self._cmd_suivi_feux,
             "!officiel": self._cmd_officiel,
             "!officiels": self._cmd_officiel,
             "!aide": self._cmd_aide,
@@ -121,6 +125,17 @@ class CommandParser:
                     position["latitude"], position["longitude"]
                 )
         return self.controller.get_forest_fire_summary(dept)
+
+    def _cmd_suivi_feux(self, sender_id: str, args: str, packet: dict) -> str:
+        """Commande !suivi_feux"""
+        position = self._extract_position(packet)
+        if not position:
+            from bot.config import DEFAULT_LATITUDE, DEFAULT_LONGITUDE
+            position = {"latitude": DEFAULT_LATITUDE, "longitude": DEFAULT_LONGITUDE}
+        
+        return self.controller.get_active_fires_summary(
+            position["latitude"], position["longitude"]
+        )
 
     def _cmd_officiel(self, sender_id: str, args: str, packet: dict) -> str:
         """Commande !officiel"""

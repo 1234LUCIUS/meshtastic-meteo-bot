@@ -25,6 +25,7 @@ ALERT_CHANNEL = int(os.getenv("ALERT_CHANNEL", "0"))
 
 # --- Clé API Météo-France ---
 METEOFRANCE_API_KEY = os.getenv("METEOFRANCE_API_KEY", "")
+NASA_API_KEY = os.getenv("NASA_API_KEY", "")
 
 # --- Intervalles (en minutes) ---
 METEO_BROADCAST_INTERVAL = int(os.getenv("METEO_BROADCAST_INTERVAL", "360"))

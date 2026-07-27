@@ -11,6 +11,7 @@ from services.vigilance import VigilanceService
 from services.geocoding import GeocodingService
 from services.official_sources import OfficialSourcesService
 from services.meteo_forets import MeteoForetsService
+from services.active_fires import ActiveFiresService
 
 logger = logging.getLogger(__name__)
 
@@ -28,6 +29,7 @@ class BotController:
         self.geocoding_service = GeocodingService()
         self.official_sources_service = OfficialSourcesService()
         self.meteo_forets_service = MeteoForetsService()
+        self.active_fires_service = ActiveFiresService()
 
     # =========================================================================
     # Météo
@@ -124,6 +126,12 @@ class BotController:
         dept = department or DEFAULT_DEPARTMENT
         data = self.meteo_forets_service.get_forest_fire_danger(dept)
         return self.meteo_forets_service.format_mdf_message(dept, data)
+
+    def get_active_fires_summary(self, latitude: float, longitude: float) -> str:
+        """Retourne le suivi des feux actifs autour d'une position."""
+        city_name = self.geocoding_service.get_city_name(latitude, longitude)
+        fires = self.active_fires_service.get_active_fires_near(latitude, longitude)
+        return self.active_fires_service.format_fires_message(fires, city_name)
 
     # =========================================================================
     # Réponse aux messages entrants
