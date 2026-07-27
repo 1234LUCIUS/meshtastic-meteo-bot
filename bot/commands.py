@@ -15,6 +15,7 @@ HELP_TEXT = (
     "!meteo <ville>  -> Météo d'une ville\n"
     "!alertes        -> Vigilances Météo-France\n"
     "!crues          -> Alertes Vigicrues\n"
+    "!feux           -> Météo des Forêts (incendies)\n"
     "!officiel       -> Infos sources officielles\n"
     "!aide           -> Cette aide"
 )
@@ -37,6 +38,9 @@ class CommandParser:
             "!alerte": self._cmd_alertes,
             "!crues": self._cmd_crues,
             "!crue": self._cmd_crues,
+            "!feux": self._cmd_feux,
+            "!feu": self._cmd_feux,
+            "!mdf": self._cmd_feux,
             "!officiel": self._cmd_officiel,
             "!officiels": self._cmd_officiel,
             "!aide": self._cmd_aide,
@@ -106,6 +110,17 @@ class CommandParser:
     def _cmd_crues(self, sender_id: str, args: str, packet: dict) -> str:
         """Commande !crues"""
         return self.controller.get_vigicrues_summary()
+
+    def _cmd_feux(self, sender_id: str, args: str, packet: dict) -> str:
+        """Commande !feux [département]"""
+        dept = args.strip() if args else None
+        if not dept:
+            position = self._extract_position(packet)
+            if position:
+                dept = self.controller.get_department_from_position(
+                    position["latitude"], position["longitude"]
+                )
+        return self.controller.get_forest_fire_summary(dept)
 
     def _cmd_officiel(self, sender_id: str, args: str, packet: dict) -> str:
         """Commande !officiel"""

@@ -54,6 +54,11 @@ def parse_args():
         help="Teste les sources officielles et affiche le résultat.",
     )
     parser.add_argument(
+        "--test-feux",
+        action="store_true",
+        help="Teste le service Météo des Forêts et affiche le résultat.",
+    )
+    parser.add_argument(
         "--ville",
         type=str,
         default="",
@@ -85,6 +90,11 @@ def run_tests(args, controller: BotController):
     if args.test_officiel:
         logger.info("=== TEST SOURCES OFFICIELLES ===")
         result = controller.get_official_sources_summary()
+        print("\n" + result + "\n")
+
+    if args.test_feux:
+        logger.info("=== TEST MÉTÉO DES FORÊTS ===")
+        result = controller.get_forest_fire_summary()
         print("\n" + result + "\n")
 
 

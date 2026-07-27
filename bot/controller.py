@@ -10,6 +10,7 @@ from services.meteo import MeteoService
 from services.vigilance import VigilanceService
 from services.geocoding import GeocodingService
 from services.official_sources import OfficialSourcesService
+from services.meteo_forets import MeteoForetsService
 
 logger = logging.getLogger(__name__)
 
@@ -26,6 +27,7 @@ class BotController:
         self.vigilance_service = VigilanceService()
         self.geocoding_service = GeocodingService()
         self.official_sources_service = OfficialSourcesService()
+        self.meteo_forets_service = MeteoForetsService()
 
     # =========================================================================
     # Météo
@@ -116,6 +118,12 @@ class BotController:
         """Retourne un résumé des informations des sources officielles."""
         dept = department or DEFAULT_DEPARTMENT
         return self.official_sources_service.format_official_summary(dept)
+
+    def get_forest_fire_summary(self, department: Optional[str] = None) -> str:
+        """Retourne le risque d'incendie de forêt."""
+        dept = department or DEFAULT_DEPARTMENT
+        data = self.meteo_forets_service.get_forest_fire_danger(dept)
+        return self.meteo_forets_service.format_mdf_message(dept, data)
 
     # =========================================================================
     # Réponse aux messages entrants
