@@ -134,7 +134,9 @@ def main():
         sys.exit(0)
 
     signal.signal(signal.SIGINT, shutdown)
-    signal.signal(signal.SIGTERM, shutdown)
+    # SIGTERM n'est pas disponible sur Windows, donc on ne l'enregistre pas
+    if sys.platform != "win32":
+        signal.signal(signal.SIGTERM, shutdown)
 
     # Démarrage du planificateur
     scheduler.start()

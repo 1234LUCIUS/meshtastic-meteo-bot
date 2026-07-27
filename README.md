@@ -5,7 +5,7 @@
 [![Météo-France](https://img.shields.io/badge/Source-M%C3%A9t%C3%A9o--France-0078D4)](https://vigilance.meteofrance.fr)
 [![Vigicrues](https://img.shields.io/badge/Source-Vigicrues-1E90FF)](https://vigicrues.gouv.fr)
 
-Un bot Python autonome pour les réseaux **Meshtastic** qui diffuse la météo locale, envoie des **alertes urgentes** avec reporting horaire, et publie des informations issues de **sources officielles françaises** (Météo-France, Vigicrues, Préfectures).
+Un bot Python autonome compatible **Windows**, **Linux** et **macOS** pour les réseaux **Meshtastic**. Il diffuse la météo locale, envoie des **alertes urgentes** avec reporting horaire, et publie des informations issues de **sources officielles françaises** (Météo-France, Vigicrues, Préfectures).
 
 ---
 
@@ -93,9 +93,31 @@ ALERT_TRIGGER_LEVEL=3
 
 ### 4. Lancer le bot
 
-```bash
+Sur **Windows** :
+```powershell
 python main.py
 ```
+
+Sur **Linux/macOS** :
+```bash
+python3 main.py
+```
+
+---
+
+## Utilisation avec un module physique
+
+Le bot est conçu pour fonctionner avec un module Meshtastic physique (Heltec, T-Beam, etc.).
+
+### Connexion USB (Série)
+1. Branchez votre module en USB.
+2. Identifiez le port (ex: `COM3` sur Windows, `/dev/ttyUSB0` sur Linux).
+3. Dans le fichier `.env`, réglez `MESHTASTIC_CONNECTION_TYPE=serial` et `MESHTASTIC_SERIAL_PORT=COM3`.
+
+### Connexion WiFi (TCP)
+1. Activez le WiFi sur votre module Meshtastic.
+2. Identifiez son adresse IP sur votre réseau local.
+3. Dans le fichier `.env`, réglez `MESHTASTIC_CONNECTION_TYPE=tcp` et `MESHTASTIC_TCP_HOST=192.168.1.x`.
 
 ---
 

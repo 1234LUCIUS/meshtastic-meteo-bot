@@ -99,7 +99,9 @@ def setup_logging():
 
     handlers = [logging.StreamHandler()]
     if LOG_FILE:
-        handlers.append(logging.FileHandler(LOG_FILE, encoding="utf-8"))
+        # Utiliser os.path.normpath pour la compatibilité des chemins Windows/Linux
+        log_path = os.path.normpath(LOG_FILE)
+        handlers.append(logging.FileHandler(log_path, encoding="utf-8"))
 
     logging.basicConfig(
         level=log_level,
