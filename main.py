@@ -162,6 +162,10 @@ def main():
     # Démarrage du planificateur
     scheduler.start()
 
+    # Diffusion initiale immédiate pour test
+    logger.info("Lancement de la diffusion météo initiale...")
+    scheduler._job_broadcast_weather()
+
     # Message de démarrage sur le réseau
     startup_msg = (
         "📡 Météo-Bot actif ! Commandes : "

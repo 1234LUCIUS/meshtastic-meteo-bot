@@ -175,8 +175,15 @@ class BotScheduler:
         """Diffuse la météo de routine sur le canal principal."""
         logger.info("Diffusion météo de routine...")
         try:
-            message = self.controller.get_weather_broadcast_message()
-            self.controller.client.send_text(message)
+            weather_msg = self.controller.get_weather_default()
+            logger.info(f"Message météo généré : {weather_msg[:50]}...")
+            
+            success = self.controller.client.send_text(weather_msg, channel_index=BROADCAST_CHANNEL)
+            if success:
+                logger.info("Message météo envoyé avec succès sur le réseau.")
+            else:
+                logger.error("Échec de l'envoi du message météo sur le réseau.")
+                
         except Exception as e:
             logger.error(f"Erreur lors de la diffusion météo : {e}")
 
