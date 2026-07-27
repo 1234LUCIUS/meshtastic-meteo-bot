@@ -17,11 +17,12 @@ Un bot Python autonome compatible **Windows**, **Linux** et **macOS** pour les r
 - Météo à la demande pour **n'importe quelle ville française** via la commande `!meteo <ville>`.
 - Diffusion périodique configurable (toutes les N heures).
 
-### Alertes urgentes Météo-France
-- Surveillance continue des **bulletins de Vigilance Météo-France** (Vert/Jaune/Orange/Rouge).
-- Notification immédiate sur le canal mesh en cas de vigilance Orange ou Rouge.
-- **Reporting horaire automatique** tant qu'une alerte grave est active (style `POINT SITUATION`).
-- Notification de levée d'alerte.
+### Alertes urgentes et Surveillance Régionale
+- **Vigilance Météo-France** : Surveillance continue (Vert/Jaune/Orange/Rouge).
+- **Spécial Normandie** : Surveillance automatique et prioritaire des 5 départements normands (14, 27, 50, 61, 76).
+- **Multi-Risques** : Alertes automatiques pour les **incendies** (Météo des Forêts) et **catastrophes naturelles**.
+- **Reporting horaire** : Diffusion automatique d'un point de situation tant qu'une alerte grave est active.
+- **Priorité** : Notification immédiate sur le canal mesh pour tout danger élevé.
 
 ### Sources officielles
 - **Suivi des Feux Actifs** : Détection satellite en temps réel via la **NASA (FIRMS)**.
@@ -93,6 +94,9 @@ DEFAULT_LONGITUDE=2.3522
 
 # Niveau d'alerte minimum (3=Orange, 4=Rouge)
 ALERT_TRIGGER_LEVEL=3
+
+# Surveillance Normandie (14, 27, 50, 61, 76)
+ENABLE_NORMANDIE_ALERTS=True
 ```
 
 ### 4. Lancer le bot

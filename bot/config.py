@@ -35,6 +35,11 @@ ALERT_REPORT_INTERVAL = int(os.getenv("ALERT_REPORT_INTERVAL", "60"))
 # --- Niveau minimum d'alerte pour déclenchement ---
 ALERT_TRIGGER_LEVEL = int(os.getenv("ALERT_TRIGGER_LEVEL", "3"))
 
+# --- Configuration Normandie ---
+# Départements normands : 14 (Calvados), 27 (Eure), 50 (Manche), 61 (Orne), 76 (Seine-Maritime)
+NORMANDIE_DEPTS = ["14", "27", "50", "61", "76"]
+ENABLE_NORMANDIE_ALERTS = os.getenv("ENABLE_NORMANDIE_ALERTS", "True").lower() == "true"
+
 # --- Logging ---
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
 LOG_FILE = os.getenv("LOG_FILE", "logs/bot.log")

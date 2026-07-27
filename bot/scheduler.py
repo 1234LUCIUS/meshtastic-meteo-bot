@@ -21,6 +21,8 @@ from bot.config import (
     ALERT_REPORT_INTERVAL,
     ALERT_TRIGGER_LEVEL,
     VIGILANCE_LEVELS,
+    NORMANDIE_DEPTS,
+    ENABLE_NORMANDIE_ALERTS,
 )
 
 logger = logging.getLogger(__name__)
@@ -126,13 +128,48 @@ class BotScheduler:
     # -------------------------------------------------------------------------
 
     def _job_check_alerts(self):
-        """Vérifie les nouvelles alertes Météo-France."""
-        logger.debug("Vérification des alertes Météo-France...")
+        """Vérifie les nouvelles alertes (Météo, Normandie, Feux)."""
+        logger.debug("Vérification globale des alertes...")
         try:
+            # 1. Alertes Météo-France Nationales (filtre Normandie si activé)
             alerts = self.controller.fetch_all_vigilance_alerts()
-            self._process_alerts(alerts)
+            
+            # Si Normandie activée, on s'assure de surveiller ces départements même s'ils ne sont pas locaux
+            if ENABLE_NORMANDIE_ALERTS:
+                normandie_alerts = [a for a in alerts if a.get("department") in NORMANDIE_DEPTS]
+                self._process_alerts(normandie_alerts, prefix="[NORMANDIE] ")
+
+            # 2. Alertes Locales (basées sur la position par défaut)
+            from bot.config import DEFAULT_DEPARTMENT
+            local_alerts = [a for a in alerts if a.get("department") == DEFAULT_DEPARTMENT]
+            self._process_alerts(local_alerts)
+
+            # 3. Vérification des Feux de Forêt en Normandie
+            if ENABLE_NORMANDIE_ALERTS:
+                for dept in NORMANDIE_DEPTS:
+                    self._check_forest_fire_alert(dept)
+
         except Exception as e:
             logger.error(f"Erreur lors de la vérification des alertes : {e}")
+
+    def _check_forest_fire_alert(self, dept: str):
+        """Vérifie le risque d'incendie pour un département."""
+        mdf_data = self.controller.meteo_forets_service.get_forest_fire_danger(dept)
+        if mdf_data and mdf_data.get("level", 1) >= ALERT_TRIGGER_LEVEL:
+            alert_id = f"MDF_{dept}"
+            if alert_id not in self.active_alerts:
+                level_info = self.controller.meteo_forets_service.MDF_LEVELS.get(mdf_data["level"])
+                message = (
+                    f"🔥 ALERTE INCENDIE [NORMANDIE] — Dept {dept}\n"
+                    f"Danger : {level_info['name']}\n"
+                    f"Risque élevé détecté. Prudence extrême.\n"
+                    f"Source: Météo-France (Météo des Forêts)"
+                )
+                self.controller.client.send_alert(message)
+                # On ajoute à active_alerts pour éviter les doublons
+                self.active_alerts[alert_id] = AlertState(
+                    mdf_data["level"], ["Incendie"], dept, "Danger d'incendie élevé"
+                )
 
     def _job_broadcast_weather(self):
         """Diffuse la météo de routine sur le canal principal."""
@@ -164,7 +201,7 @@ class BotScheduler:
     # Gestion des alertes
     # -------------------------------------------------------------------------
 
-    def _process_alerts(self, alerts: list):
+    def _process_alerts(self, alerts: list, prefix: str = ""):
         """
         Compare les nouvelles alertes avec l'état actuel.
         Déclenche les notifications pour les nouvelles alertes ou les changements de niveau.
@@ -190,7 +227,7 @@ class BotScheduler:
                 # Nouvelle alerte
                 state = AlertState(level, phenomena, dept, summary)
                 self.active_alerts[dept] = state
-                self._send_new_alert(dept, state)
+                self._send_new_alert(dept, state, prefix=prefix)
             else:
                 existing = self.active_alerts[dept]
                 if level != existing.level or set(phenomena) != set(existing.phenomena):
@@ -198,7 +235,7 @@ class BotScheduler:
                     existing.level = level
                     existing.phenomena = phenomena
                     existing.summary = summary
-                    self._send_alert_update(dept, existing)
+                    self._send_alert_update(dept, existing, prefix=prefix)
 
         # Lever les alertes qui ne sont plus présentes
         for dept in list(self.active_alerts.keys()):
@@ -206,13 +243,13 @@ class BotScheduler:
                 self._send_alert_lifted(dept, self.active_alerts[dept])
                 del self.active_alerts[dept]
 
-    def _send_new_alert(self, dept: str, alert: AlertState):
+    def _send_new_alert(self, dept: str, alert: AlertState, prefix: str = ""):
         """Envoie une notification de nouvelle alerte."""
         level_info = VIGILANCE_LEVELS.get(alert.level, VIGILANCE_LEVELS[3])
         phenomena_str = ", ".join(alert.phenomena) if alert.phenomena else "Phénomène non précisé"
 
         message = (
-            f"🚨 ALERTE MÉTÉO — VIGILANCE {level_info['name']}\n"
+            f"🚨 {prefix}ALERTE MÉTÉO — VIGILANCE {level_info['name']}\n"
             f"Dept: {dept}\n"
             f"Phénomène(s): {phenomena_str}\n"
             f"{alert.summary}\n"
@@ -222,13 +259,13 @@ class BotScheduler:
         logger.warning(f"Nouvelle alerte {level_info['name']} pour {dept}: {phenomena_str}")
         self.controller.client.send_alert(message)
 
-    def _send_alert_update(self, dept: str, alert: AlertState):
+    def _send_alert_update(self, dept: str, alert: AlertState, prefix: str = ""):
         """Envoie une notification de mise à jour d'alerte."""
         level_info = VIGILANCE_LEVELS.get(alert.level, VIGILANCE_LEVELS[3])
         phenomena_str = ", ".join(alert.phenomena) if alert.phenomena else "Non précisé"
 
         message = (
-            f"🔄 MAJ ALERTE — VIGILANCE {level_info['name']}\n"
+            f"🔄 {prefix}MAJ ALERTE — VIGILANCE {level_info['name']}\n"
             f"Dept: {dept} | Durée: {alert.duration_str}\n"
             f"Phénomène(s): {phenomena_str}\n"
             f"Source: vigilance.meteofrance.fr"
@@ -236,25 +273,25 @@ class BotScheduler:
         logger.warning(f"Mise à jour alerte {dept}: niveau {level_info['name']}")
         self.controller.client.send_alert(message)
 
-    def _send_alert_lifted(self, dept: str, alert: AlertState):
+    def _send_alert_lifted(self, dept: str, alert: AlertState, prefix: str = ""):
         """Envoie une notification de fin d'alerte."""
         level_info = VIGILANCE_LEVELS.get(alert.level, VIGILANCE_LEVELS[3])
         message = (
-            f"✅ FIN D'ALERTE — {level_info['name']} levée\n"
+            f"✅ {prefix}FIN D'ALERTE — {level_info['name']} levée\n"
             f"Dept: {dept} | Durée totale: {alert.duration_str}\n"
             f"Retour à la normale."
         )
         logger.info(f"Alerte levée pour {dept}")
         self.controller.client.send_alert(message)
 
-    def _send_alert_report(self, dept: str, alert: AlertState):
+    def _send_alert_report(self, dept: str, alert: AlertState, prefix: str = ""):
         """Envoie un rapport horaire pour une alerte active."""
         level_info = VIGILANCE_LEVELS.get(alert.level, VIGILANCE_LEVELS[3])
         phenomena_str = ", ".join(alert.phenomena) if alert.phenomena else "Non précisé"
         now_str = datetime.now().strftime("%H:%M")
 
         message = (
-            f"🔴 POINT SITUATION [{now_str}] — ALERTE {level_info['name']}\n"
+            f"🔴 {prefix}POINT SITUATION [{now_str}] — ALERTE {level_info['name']}\n"
             f"Dept: {dept} | En cours depuis: {alert.duration_str}\n"
             f"Phénomène(s): {phenomena_str}\n"
             f"{alert.summary}\n"
