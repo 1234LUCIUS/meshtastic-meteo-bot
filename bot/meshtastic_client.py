@@ -194,16 +194,29 @@ class MeshtasticClient:
     def _on_receive(self, packet, interface):
         """Appelé à chaque réception d'un paquet."""
         try:
+            # Log de debug pour voir tous les paquets entrants
+            logger.debug(f"Paquet reçu : {packet.get('id')} de {packet.get('fromId')}")
+            
             decoded = packet.get("decoded", {})
             portnum = decoded.get("portnum", "")
 
-            if portnum == "TEXT_MESSAGE_APP":
-                text = decoded.get("text", "").strip()
+            # Certains firmwares utilisent des entiers pour portnum
+            # TEXT_MESSAGE_APP correspond à 1
+            is_text = (portnum == "TEXT_MESSAGE_APP" or portnum == 1)
+
+            if is_text:
+                text = decoded.get("text", "")
+                if isinstance(text, bytes):
+                    text = text.decode("utf-8", errors="replace")
+                text = text.strip()
+                
                 sender = packet.get("fromId", "unknown")
                 logger.info(f"Message reçu de {sender}: {text}")
 
                 if self.on_message_callback:
                     self.on_message_callback(sender, text, packet)
+            else:
+                logger.debug(f"Paquet ignoré (portnum: {portnum})")
 
         except Exception as e:
             logger.error(f"Erreur lors du traitement du paquet : {e}")
