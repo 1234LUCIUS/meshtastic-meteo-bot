@@ -81,8 +81,11 @@ class VigilanceService:
     def _fetch_all_via_datagouv(self) -> list:
         """Récupère toutes les alertes via l'API Open Data (sans limite de département)."""
         try:
-            # On récupère tous les enregistrements récents (environ 100 départements)
-            params = {"limit": 101}
+            # On récupère tous les enregistrements récents (environ 101 départements)
+            params = {
+                "limit": 101,
+                "order_by": "update_time DESC"
+            }
             response = requests.get(
                 DATAGOUV_VIGILANCE_URL, params=params, timeout=REQUEST_TIMEOUT
             )
@@ -179,7 +182,14 @@ class VigilanceService:
         try:
             from meteofrance_api import MeteoFranceClient
             client = MeteoFranceClient()
-            warning = client.get_warning_current_phenomenons(department)
+            
+            # Tentative de détection de la fonction disponible selon la version
+            if hasattr(client, "get_warning_current_phenomenons"):
+                warning = client.get_warning_current_phenomenons(department)
+            elif hasattr(client, "get_warning"):
+                warning = client.get_warning(department)
+            else:
+                return None
 
             if not warning:
                 return None
@@ -232,14 +242,20 @@ class VigilanceService:
     def _fetch_via_datagouv(self, department: str) -> Optional[dict]:
         """Fallback via l'API open data opendatasoft."""
         try:
+            # Correction de la syntaxe de filtrage pour opendatasoft v2.1
             params = {
-                "where": f'dep_code="{department}"',
+                "where": f'dep_code = "{department}"',
                 "limit": 1,
+                "order_by": "update_time DESC"
             }
             response = requests.get(
                 DATAGOUV_VIGILANCE_URL, params=params, timeout=REQUEST_TIMEOUT
             )
-            response.raise_for_status()
+            
+            if response.status_code != 200:
+                logger.error(f"Erreur API data.gouv ({response.status_code}) : {response.text}")
+                return None
+                
             data = response.json()
             records = data.get("results", [])
 
