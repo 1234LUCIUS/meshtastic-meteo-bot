@@ -121,13 +121,20 @@ class OfficialWebSearchService:
                 for tag in soup.find_all(['h2', 'h3']):
                     title = tag.get_text().strip().upper()
                     if any(kw in title for kw in keywords):
-                        # On tente de résumer l'alerte (Qui, Quoi, Où, Quand)
+                        # On tente de résumer l'alerte (Qui, Quoi, Résumé, Quand)
                         qui = source_name.replace("SDIS", "Pompiers")
-                        quoi = title[:80]
+                        quoi = title[:50]
+                        
+                        # Extraction d'un court résumé (les 100 premiers caractères du texte suivant le titre)
+                        summary = ""
+                        content_tag = tag.find_next(['p', 'div'])
+                        if content_tag:
+                            summary = content_tag.get_text().strip()[:80] + "..."
+                        
                         quand = datetime.now().strftime("%H:%M")
                         
                         # Formatage ultra-compact < 200 caractères
-                        msg = f"🚨 ALERTE\n👤 {qui}\n📝 {quoi}\n⏰ {quand}\n⚠️ Prudence"
+                        msg = f"🚨 ALERTE | {qui}\n📌 {quoi}\n📖 {summary}\n⏰ {quand}"
                         urgent_alerts.append(msg[:199])
                         break # Un seul par source pour éviter le spam
             except: continue
