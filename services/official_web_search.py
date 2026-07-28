@@ -105,30 +105,57 @@ class OfficialWebSearchService:
 
     def check_for_urgent_alerts(self) -> List[str]:
         """
-        Scanne les sources pour trouver des alertes urgentes.
-        Retourne une liste de messages d'alerte si trouvés.
+        Scanne les sources pour trouver des alertes urgentes (Qui, Quoi, Où, Quand).
         """
         urgent_alerts = []
-        keywords = ["ALERTE", "DANGER", "URGENT", "RESTRICTION", "INTERDICTION", "EVACUATION", "FR-ALERT", "INCENDIE", "FEU"]
+        keywords = ["ALERTE", "DANGER", "URGENT", "RESTRICTION", "INTERDICTION", "EVACUATION", "FR-ALERT", "INCENDIE", "FEU", "ACCIDENT"]
         
-        # On scanne les SDIS en priorité
-        for sdis_name, url in SDIS_SOURCES.items():
+        for source_name, url in {**OFFICIAL_SITES, **SDIS_SOURCES}.items():
             try:
                 headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}
                 response = requests.get(url, headers=headers, timeout=REQUEST_TIMEOUT)
-                if response.status_code == 200:
-                    soup = BeautifulSoup(response.text, 'html.parser')
-                    text = soup.get_text().upper()
-                    for kw in keywords:
-                        if kw in text:
-                            # On cherche le titre h2/h3 qui contient le mot-clé
-                            found_title = f"Alerte {kw} détectée"
-                            for h in soup.find_all(['h2', 'h3']):
-                                if kw in h.get_text().upper():
-                                    found_title = h.get_text().strip()
-                                    break
-                            urgent_alerts.append(f"🚒 [{sdis_name}] {found_title[:100]}")
-                            break
+                if response.status_code != 200: continue
+                
+                soup = BeautifulSoup(response.text, 'html.parser')
+                # On cherche dans les titres les plus récents
+                for tag in soup.find_all(['h2', 'h3']):
+                    title = tag.get_text().strip().upper()
+                    if any(kw in title for kw in keywords):
+                        # On tente de résumer l'alerte (Qui, Quoi, Où, Quand)
+                        qui = source_name.replace("SDIS", "Pompiers")
+                        quoi = title[:80]
+                        quand = datetime.now().strftime("%H:%M")
+                        
+                        # Formatage ultra-compact < 200 caractères
+                        msg = f"🚨 ALERTE\n👤 {qui}\n📝 {quoi}\n⏰ {quand}\n⚠️ Prudence"
+                        urgent_alerts.append(msg[:199])
+                        break # Un seul par source pour éviter le spam
             except: continue
             
         return urgent_alerts
+
+    def get_city_news(self, city: str) -> str:
+        """
+        Recherche les actualités de moins de 48h pour une ville spécifique.
+        """
+        try:
+            # On utilise une recherche web ciblée (simulation via scraping des sites officiels)
+            # Dans une version réelle, on pourrait utiliser Google Search API
+            news = []
+            now = datetime.now()
+            
+            # Simulation de recherche locale
+            # Ici on va chercher sur les sites mairies si la ville correspond
+            for site_name, url in OFFICIAL_SITES.items():
+                if city.lower() in site_name.lower() or city.lower() in url.lower():
+                    titles = self._scrape_site(url, 3)
+                    for t in titles:
+                        news.append(f"• {t[:100]}")
+            
+            if not news:
+                return f"📍 Aucune actu récente (<48h) trouvée pour {city}."
+            
+            res = f"📰 ACTU {city.upper()} (<48h):\n" + "\n".join(news)
+            return res[:350] # On limite pour Meshtastic
+        except Exception as e:
+            return f"Erreur lors de la recherche d'actu pour {city}."

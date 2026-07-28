@@ -139,6 +139,10 @@ class BotController:
         """Effectue une recherche active sur le web pour les infos normandes."""
         return self.official_web_service.get_latest_official_news()
 
+    def get_city_news(self, city: str) -> str:
+        """Retourne les actus de moins de 48h pour une ville."""
+        return self.official_web_service.get_city_news(city)
+
     # =========================================================================
     # Réponse aux messages entrants
     # =========================================================================

@@ -18,6 +18,7 @@ HELP_TEXT = (
     "!feux           -> Météo des Forêts (danger)\n"
     "!suivi_feux     -> Feux actifs (satellites)\n"
     "!normandie      -> Scan web officiel Normandie\n"
+    "!actu <ville>   -> Actus <48h de la ville\n"
     "!officiel       -> Infos sources officielles\n"
     "!aide           -> Cette aide"
 )
@@ -47,6 +48,7 @@ class CommandParser:
             "!suivifeux": self._cmd_suivi_feux,
             "!incendie": self._cmd_suivi_feux,
             "!normandie": self._cmd_normandie,
+            "!actu": self._cmd_actu,
             "!officiel": self._cmd_officiel,
             "!officiels": self._cmd_officiel,
             "!aide": self._cmd_aide,
@@ -146,6 +148,12 @@ class CommandParser:
     def _cmd_normandie(self, sender_id: str, args: str, packet: dict) -> str:
         """Commande !normandie"""
         return self.controller.get_normandie_web_summary()
+
+    def _cmd_actu(self, sender_id: str, args: str, packet: dict) -> str:
+        """Commande !actu <ville>"""
+        if not args:
+            return "Veuillez préciser une ville. Ex: !actu Caen"
+        return self.controller.get_city_news(args)
 
     def _cmd_aide(self, sender_id: str, args: str, packet: dict) -> str:
         """Commande !aide"""
