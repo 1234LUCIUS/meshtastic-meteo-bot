@@ -103,44 +103,26 @@ class MeshtasticClient:
         channel_index: int = BROADCAST_CHANNEL,
         want_ack: bool = False,
     ) -> bool:
-        """
-        Envoie un message texte sur le réseau Meshtastic.
-        Découpe automatiquement les messages trop longs.
-
-        :param text: Texte à envoyer.
-        :param destination: ID du nœud destinataire ou "^all" pour broadcast.
-        :param channel_index: Index du canal Meshtastic.
-        :param want_ack: Demander un accusé de réception.
-        :return: True si l'envoi a réussi.
-        """
+        """Envoie un message texte (version simplifiée)."""
         if self.simulation_mode:
-            logger.info(f"[SIMULATION] Canal {channel_index} → {destination}: {text}")
+            logger.info(f"[SIMULATION] {text}")
             return True
 
-        if not self.connected or not self.interface:
-            logger.error("Impossible d'envoyer : non connecté.")
+        if not self.interface:
             return False
 
-        # Découpage des messages longs
-        chunks = self._split_message(text)
-        success = True
-
-        for i, chunk in enumerate(chunks):
-            try:
-                self.interface.sendText(
-                    text=chunk,
-                    destinationId=destination,
-                    channelIndex=channel_index,
-                    wantAck=want_ack,
-                )
-                logger.debug(f"Message envoyé (partie {i+1}/{len(chunks)}) : {chunk[:50]}...")
-                if len(chunks) > 1 and i < len(chunks) - 1:
-                    time.sleep(1)  # Pause entre les parties pour éviter la congestion
-            except Exception as e:
-                logger.error(f"Erreur d'envoi (partie {i+1}) : {e}")
-                success = False
-
-        return success
+        try:
+            # Envoi direct sans découpage pour les tests de fiabilité
+            self.interface.sendText(
+                text=text,
+                destinationId=destination,
+                channelIndex=channel_index,
+                wantAck=want_ack
+            )
+            return True
+        except Exception as e:
+            logger.error(f"Erreur d'envoi direct : {e}")
+            return False
 
     def send_alert(self, text: str, destination: str = "^all") -> bool:
         """Envoie un message d'alerte sur le canal d'alertes."""
