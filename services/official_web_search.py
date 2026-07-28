@@ -126,13 +126,23 @@ class OfficialWebSearchService:
                         quoi = title[:60]
                         quand = datetime.now().strftime("%H:%M")
                         
+                        # Détection des consignes de sécurité
+                        instructions = "Prudence"
+                        page_text = soup.get_text().upper()
+                        if "ÉVACUATION" in page_text or "EVACUER" in page_text:
+                            instructions = "ÉVACUATION IMMÉDIATE"
+                        elif "CONFINEMENT" in page_text or "RESTER CHEZ SOI" in page_text:
+                            instructions = "CONFINEMENT / RESTEZ À L'ABRI"
+                        elif "PÉRIMÈTRE" in page_text or "ÉVITER LE SECTEUR" in page_text:
+                            instructions = "ÉVITEZ LE SECTEUR"
+                        
                         # Format strict demandé + lien source
                         msg = (
                             f"🚨 ALERTE\n"
                             f"👤 {qui}\n"
                             f"📝 {quoi}\n"
+                            f"🛡️ {instructions}\n"
                             f"⏰ {quand}\n"
-                            f"⚠️ Prudence\n"
                             f"🔗 {url[:30]}..."
                         )
                         urgent_alerts.append(msg[:199])
