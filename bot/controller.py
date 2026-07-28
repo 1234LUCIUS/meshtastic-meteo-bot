@@ -159,8 +159,14 @@ class BotController:
             response = parser.handle(sender_id, text, packet)
             if response:
                 logger.info(f"Réponse générée : {response[:50]}...")
-                # Répondre directement à l'expéditeur
-                self.client.send_text(response, destination=sender_id)
+                # Répondre sur le canal public (plus fiable que le message privé)
+                # On ajoute le nom de l'expéditeur pour qu'il sache que c'est pour lui
+                public_response = f"@{sender_id}: {response}"
+                success = self.client.send_text(public_response, destination="^all")
+                if success:
+                    logger.info("Réponse publique envoyée avec succès.")
+                else:
+                    logger.error("Échec de l'envoi de la réponse publique.")
             else:
                 logger.debug("Aucune commande reconnue ou aucune réponse à envoyer.")
         except Exception as e:
