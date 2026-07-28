@@ -68,9 +68,9 @@ class VigilanceService:
     def _fetch_all_via_datagouv(self) -> list:
         """Récupère toutes les alertes via l'API Open Data."""
         try:
+            # On retire order_by qui semble poser problème sur certains environnements
             params = {
-                "limit": 101,
-                "order_by": "update_time DESC"
+                "limit": 100
             }
             response = requests.get(DATAGOUV_VIGILANCE_URL, params=params, timeout=REQUEST_TIMEOUT)
             response.raise_for_status()

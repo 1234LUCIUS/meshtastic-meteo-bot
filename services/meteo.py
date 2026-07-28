@@ -65,13 +65,17 @@ class MeteoService:
         try:
             params = {
                 "latitude": lat, "longitude": lon,
-                "current": ["temperature_2m", "weather_code", "wind_speed_10m", "relative_humidity_2m", "apparent_temperature", "pressure_msl", "precipitation"],
-                "daily": ["weather_code", "temperature_2m_max", "temperature_2m_min", "precipitation_sum", "wind_speed_10m_max", "sunrise", "sunset"],
-                "timezone": "Europe/Paris", "models": "meteofrance_arome"
+                "current": ["temperature_2m", "weather_code", "wind_speed_10m"],
+                "timezone": "Europe/Paris"
             }
             resp = requests.get(OPEN_METEO_URL, params=params, timeout=REQUEST_TIMEOUT)
-            return resp.json() if resp.status_code == 200 else None
-        except: return None
+            if resp.status_code != 200:
+                logger.error(f"Erreur Open-Meteo : {resp.status_code} {resp.text}")
+                return None
+            return resp.json()
+        except Exception as e:
+            logger.error(f"Exception Open-Meteo : {e}")
+            return None
 
     def _fetch_open_meteo_formatted(self, lat, lon):
         data = self._fetch_open_meteo_raw(lat, lon)
