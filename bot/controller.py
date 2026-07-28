@@ -148,10 +148,20 @@ class BotController:
         Traite un message entrant et envoie la réponse appropriée.
         Appelé par le client Meshtastic.
         """
+        logger.info(f"--- MESSAGE REÇU ---")
+        logger.info(f"De: {sender_id}")
+        logger.info(f"Texte: '{text}'")
+
         from bot.commands import CommandParser
         parser = CommandParser(self)
-        response = parser.handle(sender_id, text, packet)
-
-        if response:
-            # Répondre directement à l'expéditeur
-            self.client.send_text(response, destination=sender_id)
+        
+        try:
+            response = parser.handle(sender_id, text, packet)
+            if response:
+                logger.info(f"Réponse générée : {response[:50]}...")
+                # Répondre directement à l'expéditeur
+                self.client.send_text(response, destination=sender_id)
+            else:
+                logger.debug("Aucune commande reconnue ou aucune réponse à envoyer.")
+        except Exception as e:
+            logger.error(f"Erreur lors du traitement de la commande : {e}")
