@@ -17,6 +17,7 @@ HELP_TEXT = (
     "!crues          -> Alertes Vigicrues\n"
     "!feux           -> Météo des Forêts (danger)\n"
     "!suivi_feux     -> Feux actifs (satellites)\n"
+    "!normandie      -> Scan web officiel Normandie\n"
     "!officiel       -> Infos sources officielles\n"
     "!aide           -> Cette aide"
 )
@@ -45,6 +46,7 @@ class CommandParser:
             "!suivi_feux": self._cmd_suivi_feux,
             "!suivifeux": self._cmd_suivi_feux,
             "!incendie": self._cmd_suivi_feux,
+            "!normandie": self._cmd_normandie,
             "!officiel": self._cmd_officiel,
             "!officiels": self._cmd_officiel,
             "!aide": self._cmd_aide,
@@ -140,6 +142,10 @@ class CommandParser:
     def _cmd_officiel(self, sender_id: str, args: str, packet: dict) -> str:
         """Commande !officiel"""
         return self.controller.get_official_sources_summary()
+
+    def _cmd_normandie(self, sender_id: str, args: str, packet: dict) -> str:
+        """Commande !normandie"""
+        return self.controller.get_normandie_web_summary()
 
     def _cmd_aide(self, sender_id: str, args: str, packet: dict) -> str:
         """Commande !aide"""

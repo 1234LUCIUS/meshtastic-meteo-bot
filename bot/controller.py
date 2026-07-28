@@ -12,6 +12,7 @@ from services.geocoding import GeocodingService
 from services.official_sources import OfficialSourcesService
 from services.meteo_forets import MeteoForetsService
 from services.active_fires import ActiveFiresService
+from services.official_web_search import OfficialWebSearchService
 
 logger = logging.getLogger(__name__)
 
@@ -30,6 +31,7 @@ class BotController:
         self.official_sources_service = OfficialSourcesService()
         self.meteo_forets_service = MeteoForetsService()
         self.active_fires_service = ActiveFiresService()
+        self.official_web_service = OfficialWebSearchService()
 
     # =========================================================================
     # Météo
@@ -132,6 +134,10 @@ class BotController:
         city_name = self.geocoding_service.get_city_name(latitude, longitude)
         fires = self.active_fires_service.get_active_fires_near(latitude, longitude)
         return self.active_fires_service.format_fires_message(fires, city_name)
+
+    def get_normandie_web_summary(self) -> str:
+        """Effectue une recherche active sur le web pour les infos normandes."""
+        return self.official_web_service.get_latest_official_news()
 
     # =========================================================================
     # Réponse aux messages entrants

@@ -29,6 +29,7 @@ Un bot Python autonome optimisé pour la **Normandie**, compatible **Windows**, 
 - **Météo des Forêts** ([meteofrance.com/meteo-des-forets](https://meteofrance.com/meteo-des-forets)) : Niveau de danger d'incendie par département.
 - **Vigicrues** ([vigicrues.gouv.fr](https://vigicrues.gouv.fr)) : Alertes crues en temps réel.
 - **Géorisques** ([georisques.gouv.fr](https://georisques.gouv.fr)) : Risques naturels et technologiques.
+- **Scan Web Normandie** : Recherche active sur les sites de la Région, des Préfectures et des Mairies (Caen, Rouen, Le Havre).
 - **Flux RSS préfectures** : Actualités filtrées météo/sécurité par département.
 - **Gouvernement.fr** et **Sécurité Civile** : Actualités officielles.
 
@@ -44,6 +45,7 @@ Un bot Python autonome optimisé pour la **Normandie**, compatible **Windows**, 
 | `!crues` | Alertes Vigicrues nationales |
 | `!feux` | Météo des Forêts (danger incendie) |
 | `!suivi_feux` | Suivi des feux actifs (NASA satellites) |
+| `!normandie` | Scan en temps réel des sites officiels normands (Région, Préfectures, Mairies) |
 | `!officiel` | Informations des sources officielles |
 | `!aide` | Affiche la liste des commandes |
 | `!ping` | Vérifie que le bot est actif |
