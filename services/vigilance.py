@@ -101,24 +101,13 @@ class VigilanceService:
             return []
 
     def format_vigilance_message(self, department: str, data: Optional[dict]) -> str:
-        """Formate un message de vigilance pour un département."""
-        if not data:
-            return f"Vigilance Dept {department} : Données indisponibles."
-
+        """Formate un message de vigilance ultra-compact."""
+        if not data: return f"⚠️ Vigilance {department}: Indisponible"
         level = data.get("max_level", 1)
+        if level == 1: return f"🟢 Dept {department}: RAS"
         level_info = VIGILANCE_LEVELS.get(level, VIGILANCE_LEVELS[1])
-        phenomena = data.get("phenomena", [])
-
-        if level == 1:
-            return f"🟢 VIGILANCE VERTE — Dept {department}\nPas de vigilance particulière."
-
-        phenomena_str = "\n".join(f"  • {p}" for p in phenomena) if phenomena else "  • Non précisé"
-        return (
-            f"{level_info['emoji']} VIGILANCE {level_info['name']} — Dept {department}\n"
-            f"{level_info['label']}\n"
-            f"Phénomènes :\n{phenomena_str}\n"
-            f"Détails : vigilance.meteofrance.fr"
-        )
+        phenoms = ",".join(data.get("phenomena", []))
+        return f"{level_info['emoji']} ALERTE {level_info['name']} ({department})\nRisque: {phenoms}\nPrudence requise."
 
     def format_national_summary(self, alerts: list) -> str:
         """Formate un résumé national des alertes actives."""

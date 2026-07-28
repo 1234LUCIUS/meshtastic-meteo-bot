@@ -72,17 +72,8 @@ class MeteoForetsService:
         }
 
     def format_mdf_message(self, department: str, data: Optional[dict]) -> str:
-        """Formate le message MdF."""
-        if not data:
-            return f"🔥 Météo des Forêts (Dept {department}) : Données indisponibles."
-
+        """Formate le message ultra-compact pour Meshtastic."""
+        if not data: return f"🔥 Feux {department}: Indisponible"
         level = data.get("level", 1)
         level_info = MDF_LEVELS.get(level, MDF_LEVELS[1])
-        
-        return (
-            f"{level_info['emoji']} MÉTÉO DES FORÊTS — Dept {department}\n"
-            f"Danger incendie : {level_info['name']}\n"
-            f"{level_info['label']}\n"
-            f"Soyez vigilant en zone boisée.\n"
-            f"Plus d'infos : meteofrance.com/meteo-des-forets"
-        )
+        return f"{level_info['emoji']} FEUX Dept {department}\nDanger: {level_info['name']}\n{level_info['label']}"

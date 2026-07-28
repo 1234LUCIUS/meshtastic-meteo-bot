@@ -77,8 +77,9 @@ class MeteoService:
         data = self._fetch_open_meteo_raw(lat, lon)
         if not data: return None
         curr = data.get("current", {})
-        cond = WMO_CODES.get(curr.get("weather_code"), "Temps variable")
-        return f"📡 MÉTÉO [{datetime.now().strftime('%H:%M')}] Normandie\n{cond}, {curr.get('temperature_2m')}°C, Vent {curr.get('wind_speed_10m')}km/h\nSource: AROME Météo-France"
+        cond = WMO_CODES.get(curr.get("weather_code"), "Variable")
+        # Format ultra-compact pour Meshtastic
+        return f"🌤️ {cond} | {curr.get('temperature_2m')}°C\n💨 Vent: {curr.get('wind_speed_10m')}km/h\n📍 Normandie [{datetime.now().strftime('%H:%M')}]"
 
     def _fetch_synop_nearby(self, lat, lon):
         try:
