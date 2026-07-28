@@ -23,6 +23,8 @@ from bot.config import (
     VIGILANCE_LEVELS,
     NORMANDIE_DEPTS,
     ENABLE_NORMANDIE_ALERTS,
+    BROADCAST_CHANNEL,
+    ALERT_CHANNEL
 )
 
 logger = logging.getLogger(__name__)
