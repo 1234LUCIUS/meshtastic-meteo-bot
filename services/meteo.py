@@ -55,7 +55,8 @@ class MeteoService:
         """Formate la météo (compatibilité)."""
         if not forecast: return "Météo indisponible."
         current = forecast.get("current", {})
-        return f"🌤 MÉTÉO [{datetime.now().strftime('%H:%M')}]\n{current.get('description')}, {current.get('temperature')}°C\nVent: {current.get('wind_speed')} km/h"
+        loc = forecast.get("location", "Normandie")
+        return f"🌤️ {current.get('description')} | {current.get('temperature')}°C\n💨 Vent: {current.get('wind_speed')}km/h\n📍 {loc} [{datetime.now().strftime('%H:%M')}]"
 
     def format_broadcast_message(self, forecast: dict) -> str:
         """Formate le message de diffusion (compatibilité)."""
@@ -77,13 +78,13 @@ class MeteoService:
             logger.error(f"Exception Open-Meteo : {e}")
             return None
 
-    def _fetch_open_meteo_formatted(self, lat, lon):
+    def _fetch_open_meteo_formatted(self, lat, lon, location_name="Normandie"):
         data = self._fetch_open_meteo_raw(lat, lon)
         if not data: return None
         curr = data.get("current", {})
         cond = WMO_CODES.get(curr.get("weather_code"), "Variable")
-        # Format ultra-compact pour Meshtastic
-        return f"🌤️ {cond} | {curr.get('temperature_2m')}°C\n💨 Vent: {curr.get('wind_speed_10m')}km/h\n📍 Normandie [{datetime.now().strftime('%H:%M')}]"
+        # Format ultra-compact avec localisation précise
+        return f"🌤️ {cond} | {curr.get('temperature_2m')}°C\n💨 Vent: {curr.get('wind_speed_10m')}km/h\n📍 {location_name} [{datetime.now().strftime('%H:%M')}]"
 
     def _fetch_synop_nearby(self, lat, lon):
         try:
