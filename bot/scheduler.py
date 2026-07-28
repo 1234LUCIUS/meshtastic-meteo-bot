@@ -149,9 +149,10 @@ class BotScheduler:
                 for dept in NORMANDIE_DEPTS:
                     self._check_forest_fire_alert(dept)
 
-            # 4. Vérification des actualités Préfectures / Web Officiel
+            # 4. Vérification des actualités Préfectures / SDIS / Web Officiel
             if ENABLE_NORMANDIE_ALERTS:
                 self._check_official_news_alerts()
+                self._check_sdis_urgent_alerts()
 
         except Exception as e:
             logger.error(f"Erreur lors de la vérification des alertes : {e}")
@@ -163,14 +164,22 @@ class BotScheduler:
             # Si le résumé contient des mots-clés d'alerte, on diffuse
             keywords = ["ALERTE", "DANGER", "RESTRICTION", "INTERDICTION", "EVACUATION", "FR-ALERT"]
             if any(k in news_summary.upper() for k in keywords):
-                # On ne diffuse que si c'est une information critique
-                # Pour éviter le spam, on pourrait stocker le dernier titre diffusé
                 logger.warning("Information critique détectée sur le web officiel Normandie.")
-                # Formatage court pour Meshtastic
-                alert_msg = f"🏛️ INFOS OFFICIELLES NORMANDIE\n{news_summary[:160]}..."
+                # Formatage ultra-court
+                alert_msg = f"🏛️ INFO OFFICIELLE\n{news_summary[:150]}..."
                 self.controller.client.send_text(alert_msg)
         except Exception as e:
             logger.error(f"Erreur lors de la vérification des infos web : {e}")
+
+    def _check_sdis_urgent_alerts(self):
+        """Vérifie les alertes urgentes des SDIS."""
+        try:
+            urgent_alerts = self.controller.official_web_service.check_for_urgent_alerts()
+            for alert in urgent_alerts:
+                logger.warning(f"Alerte SDIS détectée : {alert}")
+                self.controller.client.send_text(alert)
+        except Exception as e:
+            logger.error(f"Erreur lors de la vérification des alertes SDIS : {e}")
 
     def _check_forest_fire_alert(self, dept: str):
         """Vérifie le risque d'incendie pour un département."""
