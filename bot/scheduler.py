@@ -87,8 +87,7 @@ class BotScheduler:
         """Arrête le planificateur."""
         self._running = False
         schedule.clear()
-        if self._thread:
-            self._thread.join(timeout=5)
+        # On n'attend pas le thread pour éviter de bloquer l'arrêt sur Windows
         logger.info("Planificateur arrêté.")
 
     def _setup_jobs(self):
