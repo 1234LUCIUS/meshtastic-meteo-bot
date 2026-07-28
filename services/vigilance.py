@@ -32,8 +32,7 @@ class VigilanceService:
         try:
             params = {
                 "where": f'dep_code = "{department}"',
-                "limit": 1,
-                "order_by": "update_time DESC"
+                "limit": 1
             }
             response = requests.get(DATAGOUV_VIGILANCE_URL, params=params, timeout=REQUEST_TIMEOUT)
             if response.status_code != 200:

@@ -128,18 +128,18 @@ class BotScheduler:
     # -------------------------------------------------------------------------
 
     def _job_check_alerts(self):
-        """Vérifie les nouvelles alertes (Météo, Normandie, Feux)."""
+        """Vérifie les nouvelles alertes (Météo, Normandie, Feux, Préfectures)."""
         logger.debug("Vérification globale des alertes...")
         try:
-            # 1. Alertes Météo-France Nationales (filtre Normandie si activé)
+            # 1. Alertes Météo-France Nationales
             alerts = self.controller.fetch_all_vigilance_alerts()
             
-            # Si Normandie activée, on s'assure de surveiller ces départements même s'ils ne sont pas locaux
+            # Traitement des alertes pour la Normandie
             if ENABLE_NORMANDIE_ALERTS:
                 normandie_alerts = [a for a in alerts if a.get("department") in NORMANDIE_DEPTS]
                 self._process_alerts(normandie_alerts, prefix="[NORMANDIE] ")
 
-            # 2. Alertes Locales (basées sur la position par défaut)
+            # 2. Alertes Locales
             from bot.config import DEFAULT_DEPARTMENT
             local_alerts = [a for a in alerts if a.get("department") == DEFAULT_DEPARTMENT]
             self._process_alerts(local_alerts)
@@ -149,8 +149,28 @@ class BotScheduler:
                 for dept in NORMANDIE_DEPTS:
                     self._check_forest_fire_alert(dept)
 
+            # 4. Vérification des actualités Préfectures / Web Officiel
+            if ENABLE_NORMANDIE_ALERTS:
+                self._check_official_news_alerts()
+
         except Exception as e:
             logger.error(f"Erreur lors de la vérification des alertes : {e}")
+
+    def _check_official_news_alerts(self):
+        """Vérifie les actualités officielles et diffuse si alerte détectée."""
+        try:
+            news_summary = self.controller.get_normandie_web_summary()
+            # Si le résumé contient des mots-clés d'alerte, on diffuse
+            keywords = ["ALERTE", "DANGER", "RESTRICTION", "INTERDICTION", "EVACUATION", "FR-ALERT"]
+            if any(k in news_summary.upper() for k in keywords):
+                # On ne diffuse que si c'est une information critique
+                # Pour éviter le spam, on pourrait stocker le dernier titre diffusé
+                logger.warning("Information critique détectée sur le web officiel Normandie.")
+                # Formatage court pour Meshtastic
+                alert_msg = f"🏛️ INFOS OFFICIELLES NORMANDIE\n{news_summary[:160]}..."
+                self.controller.client.send_text(alert_msg)
+        except Exception as e:
+            logger.error(f"Erreur lors de la vérification des infos web : {e}")
 
     def _check_forest_fire_alert(self, dept: str):
         """Vérifie le risque d'incendie pour un département."""
