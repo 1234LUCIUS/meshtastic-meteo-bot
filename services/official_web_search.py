@@ -105,10 +105,12 @@ class OfficialWebSearchService:
 
     def check_for_urgent_alerts(self) -> List[str]:
         """
-        Scanne les sources pour trouver des alertes urgentes (Qui, Quoi, Où, Quand).
+        Scanne les sources pour trouver uniquement les alertes d'urgence grave.
+        Format strict demandé par l'utilisateur.
         """
         urgent_alerts = []
-        keywords = ["ALERTE", "DANGER", "URGENT", "RESTRICTION", "INTERDICTION", "EVACUATION", "FR-ALERT", "INCENDIE", "FEU", "ACCIDENT"]
+        # Mots-clés limités aux urgences graves uniquement
+        grave_keywords = ["ALERTE ROUGE", "DANGER IMMÉDIAT", "FR-ALERT", "INCENDIE MAJEUR", "ACCIDENT GRAVE", "ÉVACUATION", "URGENCE ABSOLUE"]
         
         for source_name, url in {**OFFICIAL_SITES, **SDIS_SOURCES}.items():
             try:
@@ -117,26 +119,24 @@ class OfficialWebSearchService:
                 if response.status_code != 200: continue
                 
                 soup = BeautifulSoup(response.text, 'html.parser')
-                # On cherche dans les titres les plus récents
                 for tag in soup.find_all(['h2', 'h3']):
                     title = tag.get_text().strip().upper()
-                    if any(kw in title for kw in keywords):
-                        # On tente de résumer l'alerte (Qui, Quoi, Résumé, Quand)
+                    if any(kw in title for kw in grave_keywords):
                         qui = source_name.replace("SDIS", "Pompiers")
-                        quoi = title[:50]
-                        
-                        # Extraction d'un court résumé (les 100 premiers caractères du texte suivant le titre)
-                        summary = ""
-                        content_tag = tag.find_next(['p', 'div'])
-                        if content_tag:
-                            summary = content_tag.get_text().strip()[:80] + "..."
-                        
+                        quoi = title[:60]
                         quand = datetime.now().strftime("%H:%M")
                         
-                        # Formatage ultra-compact < 200 caractères
-                        msg = f"🚨 ALERTE | {qui}\n📌 {quoi}\n📖 {summary}\n⏰ {quand}"
+                        # Format strict demandé + lien source
+                        msg = (
+                            f"🚨 ALERTE\n"
+                            f"👤 {qui}\n"
+                            f"📝 {quoi}\n"
+                            f"⏰ {quand}\n"
+                            f"⚠️ Prudence\n"
+                            f"🔗 {url[:30]}..."
+                        )
                         urgent_alerts.append(msg[:199])
-                        break # Un seul par source pour éviter le spam
+                        break
             except: continue
             
         return urgent_alerts

@@ -49,6 +49,7 @@ class CommandParser:
             "!incendie": self._cmd_suivi_feux,
             "!normandie": self._cmd_normandie,
             "!actu": self._cmd_actu,
+            "!actus": self._cmd_actu,
             "!officiel": self._cmd_officiel,
             "!officiels": self._cmd_officiel,
             "!aide": self._cmd_aide,
