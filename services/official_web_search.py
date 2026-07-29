@@ -1,13 +1,14 @@
 """
-Service de recherche active sur le web — Extrait les infos des sites officiels normands.
-Cible la Région Normandie, les Préfectures, les Mairies et les SDIS.
+Service de recherche active sur le web — Extrait les infos des sites officiels et journaux locaux normands.
+Cible la Région Normandie, les Préfectures, les Mairies, les SDIS et la presse locale.
 """
 
 import logging
-from typing import List, Dict
+from typing import List, Dict, Optional
 import requests
 from bs4 import BeautifulSoup
-from datetime import datetime
+from datetime import datetime, timedelta
+import re
 
 logger = logging.getLogger(__name__)
 
@@ -29,11 +30,19 @@ SDIS_SOURCES = {
     "SDIS 76 (Seine-Maritime)": "https://www.sdis76.fr/actualites"
 }
 
+# Sources de presse locale normande (Actu.fr, Paris-Normandie, Ouest-France, La Manche Libre)
+PRESS_SOURCES = {
+    "Actu Normandie": "https://actu.fr/normandie/",
+    "Paris Normandie": "https://www.paris-normandie.fr/fil-info",
+    "Ouest-France Normandie": "https://www.ouest-france.fr/normandie/",
+    "La Manche Libre": "https://www.lamanchelibre.fr/actualites-actualites.html"
+}
+
 REQUEST_TIMEOUT = 15
 
 class OfficialWebSearchService:
     """
-    Service qui scanne les sites officiels pour extraire les dernières nouvelles.
+    Service qui scanne les sites officiels et la presse locale pour extraire les dernières nouvelles.
     """
 
     def get_latest_official_news(self, limit_per_site: int = 2) -> str:
@@ -43,10 +52,10 @@ class OfficialWebSearchService:
         news_summary = []
         now_str = datetime.now().strftime("%d/%m %H:%M")
         
-        news_summary.append(f"🏛️ INFOS OFFICIELLES NORMANDIE [{now_str}]")
+        news_summary.append(f"🏛️ INFOS NORMANDIE [{now_str}]")
 
         # 1. Sites Institutionnels (Mairies, Région)
-        for site_name, url in list(OFFICIAL_SITES.items())[:3]: # On limite pour la taille du message
+        for site_name, url in list(OFFICIAL_SITES.items())[:3]:
             try:
                 titles = self._scrape_site(url, 1)
                 if titles:
@@ -55,7 +64,16 @@ class OfficialWebSearchService:
                         news_summary.append(f"• {title[:80]}")
             except: pass
 
-        # 2. SDIS (Pompiers)
+        # 2. Presse Locale (Nouveau)
+        news_summary.append("\n📰 [PRESSE LOCALE]")
+        for press_name, url in list(PRESS_SOURCES.items())[:2]:
+            try:
+                titles = self._scrape_site(url, 1)
+                if titles:
+                    news_summary.append(f"• {press_name}: {titles[0][:80]}")
+            except: pass
+
+        # 3. SDIS (Pompiers)
         news_summary.append("\n🚒 [SDIS / POMPIERS]")
         for sdis_name, url in SDIS_SOURCES.items():
             try:
@@ -64,23 +82,16 @@ class OfficialWebSearchService:
                     news_summary.append(f"• {sdis_name.split(' ')[1]}: {titles[0][:80]}")
             except: pass
 
-        # 3. Simulation Réseaux Sociaux (X / FB)
-        # Comme on ne peut pas scraper X directement sans API, on simule la détection d'alertes critiques
-        news_summary.append("\n📱 [RÉSEAUX SOCIAUX]")
-        news_summary.append("• @Prefet76: Vigilance météo en cours.")
-        news_summary.append("• @Gendarmerie_14: Prudence sur l'A13.")
-
         if len(news_summary) <= 4:
-            return "❌ Aucune information officielle récente trouvée."
+            return "❌ Aucune information récente trouvée."
 
-        # On s'assure que le message total ne dépasse pas trop la limite Meshtastic
         full_text = "\n".join(news_summary)
-        if len(full_text) > 400: # On accepte un peu plus car ce sera découpé si besoin
+        if len(full_text) > 400:
             return full_text[:397] + "..."
         return full_text
 
-    def _scrape_site(self, url: str, limit: int) -> List[str]:
-        """Scrape sommairement les titres d'un site."""
+    def _scrape_site(self, url: str, limit: int, filter_keywords: Optional[List[str]] = None) -> List[str]:
+        """Scrape les titres d'un site avec filtrage optionnel."""
         try:
             headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}
             response = requests.get(url, headers=headers, timeout=REQUEST_TIMEOUT)
@@ -89,13 +100,22 @@ class OfficialWebSearchService:
             soup = BeautifulSoup(response.text, 'html.parser')
             titles = []
             
-            # Recherche des titres h2 ou h3
-            for tag in soup.find_all(['h2', 'h3']):
+            # Recherche des titres h1, h2 ou h3 ou classes spécifiques
+            for tag in soup.find_all(['h1', 'h2', 'h3', 'a']):
                 title_text = tag.get_text().strip()
-                if len(title_text) > 20 and title_text not in titles:
-                    # Nettoyage sommaire
-                    clean_title = title_text.replace("\n", " ").replace("\r", "").strip()
-                    titles.append(clean_title)
+                
+                # Critères de qualité pour un titre
+                if 25 < len(title_text) < 150:
+                    # Si des mots-clés sont fournis, on filtre
+                    if filter_keywords:
+                        if not any(kw.lower() in title_text.lower() for kw in filter_keywords):
+                            continue
+                    
+                    # Nettoyage
+                    clean_title = re.sub(r'\s+', ' ', title_text).strip()
+                    if clean_title not in titles:
+                        titles.append(clean_title)
+                    
                     if len(titles) >= limit:
                         break
             
@@ -106,37 +126,36 @@ class OfficialWebSearchService:
     def check_for_urgent_alerts(self) -> List[str]:
         """
         Scanne les sources pour trouver uniquement les alertes d'urgence grave.
-        Format strict demandé par l'utilisateur.
         """
         urgent_alerts = []
-        # Mots-clés limités aux urgences graves uniquement
-        grave_keywords = ["ALERTE ROUGE", "DANGER IMMÉDIAT", "FR-ALERT", "INCENDIE MAJEUR", "ACCIDENT GRAVE", "ÉVACUATION", "URGENCE ABSOLUE"]
+        grave_keywords = ["ALERTE ROUGE", "DANGER IMMÉDIAT", "FR-ALERT", "INCENDIE MAJEUR", "ACCIDENT GRAVE", "ÉVACUATION", "URGENCE ABSOLUE", "COUVRE-FEU"]
         
-        for source_name, url in {**OFFICIAL_SITES, **SDIS_SOURCES}.items():
+        # On scanne officiels + presse pour les alertes
+        all_sources = {**OFFICIAL_SITES, **SDIS_SOURCES, **PRESS_SOURCES}
+        
+        for source_name, url in all_sources.items():
             try:
                 headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}
                 response = requests.get(url, headers=headers, timeout=REQUEST_TIMEOUT)
                 if response.status_code != 200: continue
                 
                 soup = BeautifulSoup(response.text, 'html.parser')
-                for tag in soup.find_all(['h2', 'h3']):
+                for tag in soup.find_all(['h1', 'h2', 'h3']):
                     title = tag.get_text().strip().upper()
                     if any(kw in title for kw in grave_keywords):
                         qui = source_name.replace("SDIS", "Pompiers")
                         quoi = title[:60]
                         quand = datetime.now().strftime("%H:%M")
                         
-                        # Détection des consignes de sécurité
                         instructions = "Prudence"
                         page_text = soup.get_text().upper()
-                        if "ÉVACUATION" in page_text or "EVACUER" in page_text:
+                        if any(k in page_text for k in ["ÉVACUATION", "EVACUER"]):
                             instructions = "ÉVACUATION IMMÉDIATE"
-                        elif "CONFINEMENT" in page_text or "RESTER CHEZ SOI" in page_text:
-                            instructions = "CONFINEMENT / RESTEZ À L'ABRI"
-                        elif "PÉRIMÈTRE" in page_text or "ÉVITER LE SECTEUR" in page_text:
+                        elif any(k in page_text for k in ["CONFINEMENT", "RESTER CHEZ SOI"]):
+                            instructions = "CONFINEMENT / À L'ABRI"
+                        elif any(k in page_text for k in ["ÉVITER LE SECTEUR", "PÉRIMÈTRE"]):
                             instructions = "ÉVITEZ LE SECTEUR"
                         
-                        # Format strict demandé + lien source
                         msg = (
                             f"🚨 ALERTE\n"
                             f"👤 {qui}\n"
@@ -153,26 +172,38 @@ class OfficialWebSearchService:
 
     def get_city_news(self, city: str) -> str:
         """
-        Recherche les actualités de moins de 48h pour une ville spécifique.
+        Recherche les actualités de moins de 48h pour une ville spécifique
+        en cherchant sur les sites officiels ET la presse locale.
         """
         try:
-            # On utilise une recherche web ciblée (simulation via scraping des sites officiels)
-            # Dans une version réelle, on pourrait utiliser Google Search API
-            news = []
-            now = datetime.now()
+            city_news = []
+            city_clean = city.strip().capitalize()
             
-            # Simulation de recherche locale
-            # Ici on va chercher sur les sites mairies si la ville correspond
+            # 1. Chercher sur les sites de presse (Actu.fr est très bon pour le local)
+            # On tente de construire une URL directe pour actu.fr si possible ou on cherche sur la page Normandie
+            for press_name, url in PRESS_SOURCES.items():
+                titles = self._scrape_site(url, 2, filter_keywords=[city])
+                for t in titles:
+                    city_news.append(f"• [{press_name}] {t}")
+
+            # 2. Chercher sur les sites officiels
             for site_name, url in OFFICIAL_SITES.items():
-                if city.lower() in site_name.lower() or city.lower() in url.lower():
-                    titles = self._scrape_site(url, 3)
+                # Si le nom du site contient la ville ou si on cherche sur le site de la région
+                if city.lower() in site_name.lower() or "normandie" in site_name.lower():
+                    titles = self._scrape_site(url, 2, filter_keywords=[city])
                     for t in titles:
-                        news.append(f"• {t[:100]}")
+                        city_news.append(f"• [Officiel] {t}")
+
+            if not city_news:
+                return f"📍 Aucune actu locale récente (<48h) pour {city_clean}."
+
+            # Formatage du message (limite 200-300 chars pour Meshtastic)
+            res = f"📰 ACTU {city_clean.upper()} (<48h):\n"
+            # On prend les 2-3 plus pertinentes
+            for n in city_news[:3]:
+                res += f"{n[:90]}\n"
             
-            if not news:
-                return f"📍 Aucune actu récente (<48h) trouvée pour {city}."
-            
-            res = f"📰 ACTU {city.upper()} (<48h):\n" + "\n".join(news)
-            return res[:350] # On limite pour Meshtastic
+            return res[:250]
         except Exception as e:
-            return f"Erreur lors de la recherche d'actu pour {city}."
+            logger.error(f"Erreur actu {city}: {e}")
+            return f"❌ Erreur lors de la recherche pour {city}."
