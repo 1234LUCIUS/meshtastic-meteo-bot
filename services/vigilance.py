@@ -20,8 +20,25 @@ class VigilanceService:
     """
 
     def get_vigilance_by_department(self, department: str) -> Optional[dict]:
-        """Récupère le niveau de vigilance pour un département."""
-        return self._fetch_via_datagouv(department)
+        """Récupère le niveau de vigilance pour un département avec fallback cache."""
+        from services.storage import StorageService
+        storage = StorageService()
+        cache_key = f"vigilance_{department}"
+
+        # Tentative réseau
+        data = self._fetch_via_datagouv(department)
+        if data and not data.get("error"):
+            storage.save(cache_key, data)
+            return data
+        
+        # Fallback cache
+        cached_data, timestamp = storage.get(cache_key)
+        if cached_data:
+            cached_data["is_cached"] = True
+            cached_data["cache_age"] = storage.get_formatted_age(timestamp)
+            return cached_data
+            
+        return data # Retourne le dernier résultat (éventuellement None)
 
     def get_all_active_alerts(self) -> list:
         """Récupère toutes les alertes actives au niveau national."""
@@ -100,13 +117,18 @@ class VigilanceService:
             return []
 
     def format_vigilance_message(self, department: str, data: Optional[dict]) -> str:
-        """Formate un message de vigilance ultra-compact."""
+        """Formate un message de vigilance avec indication de cache."""
         if not data: return f"⚠️ Vigilance {department}: Indisponible"
+        
         level = data.get("max_level", 1)
-        if level == 1: return f"🟢 Dept {department}: RAS"
+        # Indicateur de cache
+        age_str = f" (⌛ {data['cache_age']})" if data.get("is_cached") else ""
+        
+        if level == 1: return f"🟢 Dept {department}: RAS{age_str}"
+        
         level_info = VIGILANCE_LEVELS.get(level, VIGILANCE_LEVELS[1])
         phenoms = ",".join(data.get("phenomena", []))
-        return f"{level_info['emoji']} ALERTE {level_info['name']} ({department})\nRisque: {phenoms}\nPrudence requise."
+        return f"{level_info['emoji']} ALERTE {level_info['name']} ({department}){age_str}\nRisque: {phenoms}\nPrudence requise."[:199]
 
     def format_national_summary(self, alerts: list) -> str:
         """Formate un résumé national des alertes actives."""

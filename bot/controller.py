@@ -143,6 +143,11 @@ class BotController:
         """Retourne les actus de moins de 48h pour une ville."""
         return self.official_web_service.get_city_news(city)
 
+    def get_emergency_guidelines(self, theme: str) -> str:
+        """Retourne les consignes de sécurité (statiques)."""
+        from services.emergency_guidelines import get_guideline
+        return get_guideline(theme)
+
     # =========================================================================
     # Réponse aux messages entrants
     # =========================================================================

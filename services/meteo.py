@@ -27,12 +27,26 @@ class MeteoService:
 
     def get_forecast(self, latitude: float, longitude: float, location_name: str = "") -> Optional[dict]:
         """
-        Récupère les prévisions météo. (Compatibilité avec l'ancien contrôleur)
+        Récupère les prévisions météo avec fallback sur cache local.
         """
-        # On simule la structure attendue par l'ancien contrôleur pour éviter de tout casser
+        from services.storage import StorageService
+        storage = StorageService()
+        cache_key = f"meteo_{round(latitude, 2)}_{round(longitude, 2)}"
+
+        # Tentative réseau
         data = self._fetch_open_meteo_raw(latitude, longitude)
         if data:
+            storage.save(cache_key, data)
             return self._parse_forecast(data, location_name)
+        
+        # Fallback cache
+        cached_data, timestamp = storage.get(cache_key)
+        if cached_data:
+            parsed = self._parse_forecast(cached_data, location_name)
+            parsed["is_cached"] = True
+            parsed["cache_age"] = storage.get_formatted_age(timestamp)
+            return parsed
+            
         return None
 
     def get_weather_at_position(self, lat: float, lon: float) -> str:
@@ -52,11 +66,21 @@ class MeteoService:
         return "❌ Erreur : Données météo indisponibles actuellement."
 
     def format_current_weather(self, forecast: dict) -> str:
-        """Formate la météo (compatibilité)."""
-        if not forecast: return "Météo indisponible."
+        """Formate la météo avec indication de cache si nécessaire."""
+        if not forecast: return "❌ Météo indisponible."
+        
         current = forecast.get("current", {})
         loc = forecast.get("location", "Normandie")
-        return f"🌤️ {current.get('description')} | {current.get('temperature')}°C\n💨 Vent: {current.get('wind_speed')}km/h\n📍 {loc} [{datetime.now().strftime('%H:%M')}]"
+        
+        # Indicateur de cache
+        prefix = "⌛ " if forecast.get("is_cached") else "🌤️ "
+        age = f" (il y a {forecast['cache_age']})" if forecast.get("is_cached") else ""
+        
+        return (
+            f"{prefix}{current.get('description')}, {current.get('temperature')}°C{age}\n"
+            f"💨 Vent: {current.get('wind_speed')}km/h\n"
+            f"📍 {loc}"
+        )[:199]
 
     def format_broadcast_message(self, forecast: dict) -> str:
         """Formate le message de diffusion (compatibilité)."""

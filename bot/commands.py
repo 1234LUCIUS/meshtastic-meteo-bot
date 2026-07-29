@@ -20,6 +20,7 @@ HELP_TEXT = (
     "!normandie      -> Scan web officiel Normandie\n"
     "!actu <ville>   -> Actus <48h de la ville\n"
     "!officiel       -> Infos sources officielles\n"
+    "!urgence <thème> -> Consignes sécurité\n"
     "!aide           -> Cette aide"
 )
 
@@ -55,9 +56,10 @@ class CommandParser:
             "!aide": self._cmd_aide,
             "!help": self._cmd_aide,
             "!ping": self._cmd_ping,
-        }
-
-    def handle(self, sender_id: str, text: str, packet: dict) -> Optional[str]:
+            "!urgence": self._cmd_urgence,
+            "!secours": self._cmd_urgence,
+            "!consigne": self._cmd_urgence,
+        }ef handle(self, sender_id: str, text: str, packet: dict) -> Optional[str]:
         """
         Traite un message reçu.
 
@@ -163,6 +165,10 @@ class CommandParser:
     def _cmd_ping(self, sender_id: str, args: str, packet: dict) -> str:
         """Commande !ping"""
         return f"Pong! Météo-Bot actif. [{sender_id}]"
+
+    def _cmd_urgence(self, sender_id: str, args: str, packet: dict) -> str:
+        """Commande !urgence [thème]"""
+        return self.controller.get_emergency_guidelines(args)
 
     # -------------------------------------------------------------------------
     # Utilitaires
