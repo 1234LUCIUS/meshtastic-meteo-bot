@@ -45,50 +45,46 @@ class OfficialWebSearchService:
     Service qui scanne les sites officiels et la presse locale pour extraire les dernières nouvelles.
     """
 
-    def get_latest_official_news(self, limit_per_site: int = 2) -> str:
+    def get_latest_official_news(self) -> str:
         """
-        Scanne les sites officiels et retourne un résumé des derniers titres.
+        Scanne les sources normandes et retourne un résumé ultra-compact et priorisé.
+        Optimisé pour Meshtastic (max 200 chars).
         """
-        news_summary = []
-        now_str = datetime.now().strftime("%d/%m %H:%M")
+        all_articles = []
         
-        news_summary.append(f"🏛️ INFOS NORMANDIE [{now_str}]")
-
-        # 1. Sites Institutionnels (Mairies, Région)
-        for site_name, url in list(OFFICIAL_SITES.items())[:3]:
-            try:
-                titles = self._scrape_site(url, 1)
-                if titles:
-                    news_summary.append(f"\n[{site_name}]")
-                    for title in titles:
-                        news_summary.append(f"• {title[:80]}")
-            except: pass
-
-        # 2. Presse Locale (Nouveau)
-        news_summary.append("\n📰 [PRESSE LOCALE]")
-        for press_name, url in list(PRESS_SOURCES.items())[:2]:
-            try:
-                titles = self._scrape_site(url, 1)
-                if titles:
-                    news_summary.append(f"• {press_name}: {titles[0][:80]}")
-            except: pass
-
-        # 3. SDIS (Pompiers)
-        news_summary.append("\n🚒 [SDIS / POMPIERS]")
+        # 1. Scanner SDIS (Priorité maximale)
         for sdis_name, url in SDIS_SOURCES.items():
-            try:
-                titles = self._scrape_site(url, 1)
-                if titles:
-                    news_summary.append(f"• {sdis_name.split(' ')[1]}: {titles[0][:80]}")
-            except: pass
+            articles = self._scrape_site_with_links(url, 1)
+            for a in articles:
+                a['source'] = sdis_name.split(' ')[1] # Juste le numéro du département
+                a['priority'] += 5 # Bonus priorité SDIS
+                all_articles.append(a)
 
-        if len(news_summary) <= 4:
-            return "❌ Aucune information récente trouvée."
+        # 2. Scanner Presse & Officiels
+        sources = {**OFFICIAL_SITES, **PRESS_SOURCES}
+        for name, url in list(sources.items())[:4]:
+            articles = self._scrape_site_with_links(url, 1)
+            for a in articles:
+                a['source'] = name[:4]
+                all_articles.append(a)
 
-        full_text = "\n".join(news_summary)
-        if len(full_text) > 400:
-            return full_text[:397] + "..."
-        return full_text
+        if not all_articles:
+            return "❌ Aucune info normande récente."
+
+        # Trier par priorité
+        all_articles.sort(key=lambda x: x['priority'], reverse=True)
+
+        res = "🏛️ NORMANDIE:\n"
+        for a in all_articles:
+            compact_t = self._compact_title(a['title'])
+            line = f"•[{a['source']}] {compact_t}"
+            
+            # On vérifie la limite de 200 chars
+            if len(res) + len(line) + 1 > 198:
+                break
+            res += line + "\n"
+            
+        return res.strip()[:199]
 
     def _scrape_site_with_links(self, url: str, limit: int, filter_keywords: Optional[List[str]] = None) -> List[Dict[str, str]]:
         """Scrape les titres et les liens d'un site avec filtrage optionnel."""

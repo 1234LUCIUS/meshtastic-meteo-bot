@@ -4,44 +4,52 @@ Module de consignes d'urgence statiques (accessibles hors-ligne).
 
 EMERGENCY_GUIDELINES = {
     "inondation": (
-        "🌊 INONDATION :\n"
-        "1. Coupez gaz/élec.\n"
-        "2. Montez aux étages.\n"
-        "3. Ne prenez pas votre voiture.\n"
-        "4. Écoutez la radio (France Bleu).\n"
-        "📞 Urgence : 112 ou 18"
+        "🌊 INONDATION (Séc. Civile):\n"
+        "1. Informez-vous (Radio/Vigicrues)\n"
+        "2. Coupez gaz/élec\n"
+        "3. Montez en hauteur\n"
+        "4. N'utilisez pas votre voiture\n"
+        "5. Ne descendez pas en sous-sol"
     ),
-    "tempête": (
-        "🌪️ TEMPÊTE / VENT :\n"
-        "1. Restez à l'abri.\n"
-        "2. Rangez les objets exposés.\n"
-        "3. Ne touchez pas aux fils tombés.\n"
-        "4. Évitez les zones boisées.\n"
-        "📞 Urgence : 112"
+    "tempete": (
+        "🌪️ TEMPÊTE (Séc. Civile):\n"
+        "1. Restez à l'abri (bâtiment dur)\n"
+        "2. Fermez/Verrouillez portes/fenêtres\n"
+        "3. Évitez déplacements/zones boisées\n"
+        "4. Fixez objets extérieurs\n"
+        "5. Ne touchez pas fils électriques"
     ),
     "incendie": (
-        "🔥 INCENDIE :\n"
-        "1. Évacuez vers zone dégagée.\n"
-        "2. Fermez portes/fenêtres.\n"
-        "3. Arrosez les abords (si possible).\n"
-        "4. Suivez les ordres des Pompiers.\n"
-        "📞 Pompiers : 18"
+        "🔥 FEU DE FORÊT (Séc. Civile):\n"
+        "1. Témoin? Appelez le 18 ou 112\n"
+        "2. Éloignez-vous du feu\n"
+        "3. Respirez à travers linge humide\n"
+        "4. Maison? Fermez volets/fenêtres\n"
+        "5. Suivez consignes d'évacuation"
     ),
     "canicule": (
-        "☀️ CANICULE :\n"
-        "1. Buvez de l'eau (1.5L).\n"
-        "2. Restez au frais.\n"
-        "3. Fermez volets le jour.\n"
-        "4. Prenez des nouvelles des aînés.\n"
-        "📞 SOS Médecins : 3624"
+        "☀️ CANICULE (Santé Publique):\n"
+        "1. Buvez régulièrement (eau)\n"
+        "2. Mouillez-vous le corps\n"
+        "3. Mangez en quantité suffisante\n"
+        "4. Pas d'alcool\n"
+        "5. Maintenez maison au frais"
+    ),
+    "seisme": (
+        "🫨 SÉISME (Séc. Civile):\n"
+        "1. Intérieur? Abritez-vous sous table\n"
+        "2. Extérieur? Éloignez-vous édifices\n"
+        "3. Voiture? Arrêtez-vous loin ponts\n"
+        "4. Après? Coupez gaz/élec\n"
+        "5. Évacuez prudemment"
     ),
     "numeros": (
-        "☎️ NUMÉROS D'URGENCE :\n"
+        "☎️ URGENCES :\n"
         "• 112 : Urgence Européenne\n"
-        "• 15 : SAMU\n"
-        "• 17 : Gendarmerie/Police\n"
         "• 18 : Pompiers\n"
-        "• 114 : SMS (Sourd/Malent.)"
+        "• 15 : SAMU\n"
+        "• 17 : Police/Gend.\n"
+        "• 114 : SMS (Urgence)"
     )
 }
 
