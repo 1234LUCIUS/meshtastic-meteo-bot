@@ -90,38 +90,60 @@ class OfficialWebSearchService:
             return full_text[:397] + "..."
         return full_text
 
-    def _scrape_site(self, url: str, limit: int, filter_keywords: Optional[List[str]] = None) -> List[str]:
-        """Scrape les titres d'un site avec filtrage optionnel."""
+    def _scrape_site_with_links(self, url: str, limit: int, filter_keywords: Optional[List[str]] = None) -> List[Dict[str, str]]:
+        """Scrape les titres et les liens d'un site avec filtrage optionnel."""
         try:
             headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}
             response = requests.get(url, headers=headers, timeout=REQUEST_TIMEOUT)
             if response.status_code != 200: return []
             
             soup = BeautifulSoup(response.text, 'html.parser')
-            titles = []
+            articles = []
             
-            # Recherche des titres h1, h2 ou h3 ou classes spécifiques
-            for tag in soup.find_all(['h1', 'h2', 'h3', 'a']):
+            # Mots-clés d'importance (priorité haute)
+            priority_keywords = ["accident", "incendie", "feu", "fermeture", "alerte", "travaux", "danger", "évacuation", "coupure", "météo", "vigilance", "bloqué", "mort", "décès"]
+            
+            # On cherche les liens qui contiennent du texte (souvent les titres sont dans des <a> ou englobent des hx)
+            for tag in soup.find_all('a'):
                 title_text = tag.get_text().strip()
+                link = tag.get('href', '')
                 
-                # Critères de qualité pour un titre
-                if 25 < len(title_text) < 150:
-                    # Si des mots-clés sont fournis, on filtre
+                if 25 < len(title_text) < 150 and link:
+                    # Normalisation du lien
+                    if link.startswith('/'):
+                        from urllib.parse import urljoin
+                        link = urljoin(url, link)
+                    
+                    # Filtrage par ville (si spécifié)
                     if filter_keywords:
                         if not any(kw.lower() in title_text.lower() for kw in filter_keywords):
                             continue
                     
-                    # Nettoyage
-                    clean_title = re.sub(r'\s+', ' ', title_text).strip()
-                    if clean_title not in titles:
-                        titles.append(clean_title)
+                    # Calcul de la priorité
+                    priority = 1
+                    if any(kw in title_text.lower() for kw in priority_keywords):
+                        priority = 10 # Priorité haute pour la sécurité/travaux
                     
-                    if len(titles) >= limit:
-                        break
+                    clean_title = re.sub(r'\s+', ' ', title_text).strip()
+                    
+                    # Éviter les doublons
+                    if not any(a['title'] == clean_title for a in articles):
+                        articles.append({
+                            "title": clean_title,
+                            "link": link,
+                            "priority": priority
+                        })
             
-            return titles
+            # Trier par priorité (décroissant)
+            articles.sort(key=lambda x: x['priority'], reverse=True)
+            return articles[:limit]
         except:
             return []
+
+    def _scrape_site(self, url: str, limit: int, filter_keywords: Optional[List[str]] = None) -> List[str]:
+        """Ancienne méthode pour compatibilité, appelle la nouvelle."""
+        results = self._scrape_site_with_links(url, limit, filter_keywords)
+        return [r['title'] for r in results]
 
     def check_for_urgent_alerts(self) -> List[str]:
         """
@@ -206,42 +228,61 @@ class OfficialWebSearchService:
     def get_city_news(self, city: str) -> str:
         """
         Recherche les actualités de moins de 48h pour une ville spécifique.
-        Formatage ultra-compact pour Meshtastic.
+        Sélectionne les plus importantes et inclut les liens.
         """
         try:
-            city_news = []
+            all_articles = []
             city_clean = city.strip().capitalize()
             
-            # Sources presse
+            # 1. Sources presse
             for press_name, url in PRESS_SOURCES.items():
-                titles = self._scrape_site(url, 2, filter_keywords=[city])
-                for t in titles:
-                    compact = self._compact_title(t)
-                    # On garde un préfixe court pour la source
-                    src = "Actu" if "Actu" in press_name else press_name[:4]
-                    city_news.append(f"•[{src}] {compact}")
+                articles = self._scrape_site_with_links(url, 3, filter_keywords=[city])
+                for a in articles:
+                    a['source'] = "Actu" if "Actu" in press_name else press_name[:4]
+                    all_articles.append(a)
 
-            # Sources officielles
+            # 2. Sources officielles
             for site_name, url in OFFICIAL_SITES.items():
                 if city.lower() in site_name.lower() or "normandie" in site_name.lower():
-                    titles = self._scrape_site(url, 2, filter_keywords=[city])
-                    for t in titles:
-                        compact = self._compact_title(t)
-                        city_news.append(f"•[Off] {compact}")
+                    articles = self._scrape_site_with_links(url, 2, filter_keywords=[city])
+                    for a in articles:
+                        a['source'] = "Off"
+                        all_articles.append(a)
 
-            if not city_news:
-                return f"📍 Pas d'actu récente pour {city_clean}."
+            if not all_articles:
+                return f"📍 Pas d'actu pour {city_clean}."
 
-            # Construction du message final (strictement optimisé)
+            # Trier toutes les sources confondues par priorité
+            all_articles.sort(key=lambda x: x['priority'], reverse=True)
+
+            # Construction du message final
             res = f"📰 {city_clean.upper()}:\n"
             
-            # On essaie d'ajouter le plus de news possible sans dépasser 200 chars
-            for n in city_news:
-                # Si l'ajout de la news dépasse la limite, on s'arrête
-                if len(res) + len(n) + 1 > 195:
-                    # On tronque la dernière si elle est vraiment importante ou on arrête
-                    break
-                res += f"{n}\n"
+            for a in all_articles:
+                compact_t = self._compact_title(a['title'])
+                # Lien court (on garde juste la fin ou on tronque intelligemment)
+                # Note: Sur Meshtastic, les liens longs sont pénibles, mais nécessaires.
+                # On essaie de garder le lien le plus court possible.
+                link = a['link']
+                if len(link) > 40:
+                    # On essaie de simplifier le lien si c'est un lien connu
+                    if "actu.fr" in link:
+                        # Garder juste l'ID à la fin si possible
+                        match = re.search(r'_(\d+)\.html', link)
+                        if match:
+                            link = f"actu.fr/i/{match.group(1)}"
+                
+                line = f"•[{a['source']}] {compact_t}\n🔗 {link}"
+                
+                # Vérifier la limite de 200 caractères
+                if len(res) + len(line) + 1 > 200:
+                    if len(res) > 20: # Si on a déjà au moins une news
+                        break
+                    else:
+                        # Si même la première news est trop longue, on la tronque violemment
+                        line = line[:195] + "..."
+                
+                res += line + "\n"
             
             return res.strip()
         except Exception as e:
