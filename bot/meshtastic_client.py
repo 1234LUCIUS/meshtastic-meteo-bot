@@ -48,6 +48,8 @@ class MeshtasticClient:
         self.simulation_mode = simulation_mode
         self.connected = False
         self._node_info_cache = {}
+        self.broadcast_channel = BROADCAST_CHANNEL
+        self.local_telemetry = {}  # Stockage des données BME280/Capteurs
 
     def connect(self) -> bool:
         """Établit la connexion au nœud Meshtastic."""
@@ -100,7 +102,7 @@ class MeshtasticClient:
         self,
         text: str,
         destination: str = "^all",
-        channel_index: int = BROADCAST_CHANNEL,
+        channel_index: Optional[int] = None,
         want_ack: bool = False,
     ) -> bool:
         """Envoie un message texte (version simplifiée)."""
@@ -111,12 +113,15 @@ class MeshtasticClient:
         if not self.interface:
             return False
 
+        # Utilise le canal spécifié ou le canal de diffusion actuel
+        target_channel = channel_index if channel_index is not None else self.broadcast_channel
+
         try:
             # Envoi direct sans découpage pour les tests de fiabilité
             self.interface.sendText(
                 text=text,
                 destinationId=destination,
-                channelIndex=channel_index,
+                channelIndex=target_channel,
                 wantAck=want_ack
             )
             return True
@@ -176,29 +181,41 @@ class MeshtasticClient:
     def _on_receive(self, packet, interface):
         """Appelé à chaque réception d'un paquet."""
         try:
-            # Log de debug pour voir tous les paquets entrants
-            logger.debug(f"Paquet reçu : {packet.get('id')} de {packet.get('fromId')}")
-            
             decoded = packet.get("decoded", {})
             portnum = decoded.get("portnum", "")
 
-            # Certains firmwares utilisent des entiers pour portnum
-            # TEXT_MESSAGE_APP correspond à 1
+            # 1. Gestion des messages texte
             is_text = (portnum == "TEXT_MESSAGE_APP" or portnum == 1)
-
             if is_text:
                 text = decoded.get("text", "")
                 if isinstance(text, bytes):
                     text = text.decode("utf-8", errors="replace")
                 text = text.strip()
-                
                 sender = packet.get("fromId", "unknown")
-                logger.info(f"Message reçu de {sender}: {text}")
-
                 if self.on_message_callback:
                     self.on_message_callback(sender, text, packet)
-            else:
-                logger.debug(f"Paquet ignoré (portnum: {portnum})")
+                return
+
+            # 2. Gestion de la télémétrie (BME280 / Capteurs environnementaux)
+            is_telemetry = (portnum == "TELEMETRY_APP" or portnum == 67)
+            if is_telemetry:
+                telemetry = decoded.get("telemetry", {})
+                env = telemetry.get("environment_metrics", {})
+                if env:
+                    # On stocke les données du nœud local (ou de n'importe quel nœud avec capteur)
+                    sender = packet.get("fromId", "unknown")
+                    logger.info(f"Télémétrie reçue de {sender}: {env}")
+                    
+                    # On stocke les dernières données valides
+                    self.local_telemetry[sender] = {
+                        "temperature": env.get("temperature"),
+                        "humidity": env.get("relative_humidity"),
+                        "pressure": env.get("barometric_pressure"),
+                        "timestamp": time.time()
+                    }
+                    # Si c'est le nœud local, on le marque spécifiquement
+                    if sender == self.interface.myInfo.my_node_num:
+                        self.local_telemetry["local"] = self.local_telemetry[sender]
 
         except Exception as e:
             logger.error(f"Erreur lors du traitement du paquet : {e}")

@@ -66,21 +66,32 @@ class MeteoService:
         return "❌ Erreur : Données météo indisponibles actuellement."
 
     def format_current_weather(self, forecast: dict) -> str:
-        """Formate la météo avec indication de cache si nécessaire."""
+        """Formate la météo avec indication de cache et données capteurs locaux."""
         if not forecast: return "❌ Météo indisponible."
         
         current = forecast.get("current", {})
         loc = forecast.get("location", "Normandie")
         
-        # Indicateur de cache
+        # 1. Données du capteur local BME280 (prioritaires si disponibles)
+        local = forecast.get("local_sensor")
+        local_str = ""
+        if local:
+            t = round(local.get("temperature", 0), 1)
+            h = round(local.get("humidity", 0))
+            p = round(local.get("pressure", 0))
+            local_str = f"\n🏠 Local: {t}°C | {h}% | {p}hPa"
+
+        # 2. Données distantes (API ou Cache)
         prefix = "⌛ " if forecast.get("is_cached") else "🌤️ "
-        age = f" (il y a {forecast['cache_age']})" if forecast.get("is_cached") else ""
+        age = f" ({forecast['cache_age']})" if forecast.get("is_cached") else ""
         
-        return (
+        msg = (
             f"{prefix}{current.get('description')}, {current.get('temperature')}°C{age}\n"
-            f"💨 Vent: {current.get('wind_speed')}km/h\n"
+            f"💨 Vent: {current.get('wind_speed')}km/h"
+            f"{local_str}\n"
             f"📍 {loc}"
-        )[:199]
+        )
+        return msg[:199]
 
     def format_broadcast_message(self, forecast: dict) -> str:
         """Formate le message de diffusion (compatibilité)."""

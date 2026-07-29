@@ -50,6 +50,12 @@ class BotController:
         display_name = location.get("city") or city_name
 
         forecast = self.meteo_service.get_forecast(lat, lon, location_name=display_name)
+        
+        # Ajouter les données locales BME280 si c'est la ville par défaut ou proche
+        local_data = self.client.local_telemetry.get("local")
+        if local_data:
+            forecast["local_sensor"] = local_data
+
         return self.meteo_service.format_current_weather(forecast)
 
     def get_weather_for_position(self, latitude: float, longitude: float) -> str:
@@ -58,6 +64,12 @@ class BotController:
 
         city_name = self.geocoding_service.get_city_name(latitude, longitude)
         forecast = self.meteo_service.get_forecast(latitude, longitude, location_name=city_name)
+        
+        # Ajouter les données locales BME280
+        local_data = self.client.local_telemetry.get("local")
+        if local_data:
+            forecast["local_sensor"] = local_data
+            
         return self.meteo_service.format_current_weather(forecast)
 
     def get_weather_default(self) -> str:
@@ -147,6 +159,17 @@ class BotController:
         """Retourne les consignes de sécurité (statiques)."""
         from services.emergency_guidelines import get_guideline
         return get_guideline(theme)
+
+    def set_broadcast_channel(self, channel_id: str) -> str:
+        """Change le canal de diffusion périodique."""
+        try:
+            ch_idx = int(channel_id)
+            if 0 <= ch_idx <= 7:
+                self.client.broadcast_channel = ch_idx
+                return f"✅ Canal de diffusion réglé sur : {ch_idx}"
+            return "❌ Index de canal invalide (0-7)."
+        except ValueError:
+            return "❌ L'index du canal doit être un nombre (0-7)."
 
     # =========================================================================
     # Réponse aux messages entrants

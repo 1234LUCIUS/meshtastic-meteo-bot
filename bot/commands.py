@@ -21,6 +21,7 @@ HELP_TEXT = (
     "!actu <ville>   -> Actus <48h de la ville\n"
     "!officiel       -> Infos sources officielles\n"
     "!urgence <thème> -> Consignes sécurité\n"
+    "!canal <0-7>    -> Changer canal diffusion\n"
     "!aide           -> Cette aide"
 )
 
@@ -59,6 +60,7 @@ class CommandParser:
             "!urgence": self._cmd_urgence,
             "!secours": self._cmd_urgence,
             "!consigne": self._cmd_urgence,
+            "!canal": self._cmd_canal,
         }ef handle(self, sender_id: str, text: str, packet: dict) -> Optional[str]:
         """
         Traite un message reçu.
@@ -169,6 +171,12 @@ class CommandParser:
     def _cmd_urgence(self, sender_id: str, args: str, packet: dict) -> str:
         """Commande !urgence [thème]"""
         return self.controller.get_emergency_guidelines(args)
+
+    def _cmd_canal(self, sender_id: str, args: str, packet: dict) -> str:
+        """Commande !canal <index>"""
+        if not args:
+            return f"Canal actuel: {self.controller.client.broadcast_channel}. Utilisez !canal <0-7> pour changer."
+        return self.controller.set_broadcast_channel(args)
 
     # -------------------------------------------------------------------------
     # Utilitaires
