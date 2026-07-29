@@ -170,40 +170,80 @@ class OfficialWebSearchService:
             
         return urgent_alerts
 
+    def _compact_title(self, title: str) -> str:
+        """Raccourcit un titre pour ne garder que l'essentiel."""
+        # Supprimer les guillemets et articles de début
+        t = re.sub(r'^["«\s]+', '', title)
+        t = re.sub(r'["»\s]+$', '', t)
+        
+        # Supprimer les mots de liaison trop longs ou inutiles au début
+        t = re.sub(r'^(L\'|Le |La |Les |Un |Une |Des |Cette |Ce |Ces )', '', t, flags=re.IGNORECASE)
+        
+        # Remplacer certains mots par des abréviations
+        replacements = {
+            "Gendarmerie": "Gend.",
+            "Sapeurs-Pompiers": "Pompiers",
+            "Département": "Dept",
+            "Président": "Prés.",
+            "Gouvernement": "Gouv.",
+            "Information": "Info",
+            "Inondation": "Inond.",
+            "Accident": "Accid.",
+            "Circulation": "Circu.",
+            "Manifestation": "Manif.",
+            "Association": "Asso.",
+            "Établissement": "Étab.",
+            "Région": "Rég.",
+            "Commune": "Com.",
+            "Mairie": "Mair.",
+            "Préfecture": "Préf.",
+        }
+        for word, sub in replacements.items():
+            t = re.sub(rf'\b{word}\b', sub, t, flags=re.IGNORECASE)
+            
+        return t
+
     def get_city_news(self, city: str) -> str:
         """
-        Recherche les actualités de moins de 48h pour une ville spécifique
-        en cherchant sur les sites officiels ET la presse locale.
+        Recherche les actualités de moins de 48h pour une ville spécifique.
+        Formatage ultra-compact pour Meshtastic.
         """
         try:
             city_news = []
             city_clean = city.strip().capitalize()
             
-            # 1. Chercher sur les sites de presse (Actu.fr est très bon pour le local)
-            # On tente de construire une URL directe pour actu.fr si possible ou on cherche sur la page Normandie
+            # Sources presse
             for press_name, url in PRESS_SOURCES.items():
                 titles = self._scrape_site(url, 2, filter_keywords=[city])
                 for t in titles:
-                    city_news.append(f"• [{press_name}] {t}")
+                    compact = self._compact_title(t)
+                    # On garde un préfixe court pour la source
+                    src = "Actu" if "Actu" in press_name else press_name[:4]
+                    city_news.append(f"•[{src}] {compact}")
 
-            # 2. Chercher sur les sites officiels
+            # Sources officielles
             for site_name, url in OFFICIAL_SITES.items():
-                # Si le nom du site contient la ville ou si on cherche sur le site de la région
                 if city.lower() in site_name.lower() or "normandie" in site_name.lower():
                     titles = self._scrape_site(url, 2, filter_keywords=[city])
                     for t in titles:
-                        city_news.append(f"• [Officiel] {t}")
+                        compact = self._compact_title(t)
+                        city_news.append(f"•[Off] {compact}")
 
             if not city_news:
-                return f"📍 Aucune actu locale récente (<48h) pour {city_clean}."
+                return f"📍 Pas d'actu récente pour {city_clean}."
 
-            # Formatage du message (limite 200-300 chars pour Meshtastic)
-            res = f"📰 ACTU {city_clean.upper()} (<48h):\n"
-            # On prend les 2-3 plus pertinentes
-            for n in city_news[:3]:
-                res += f"{n[:90]}\n"
+            # Construction du message final (strictement optimisé)
+            res = f"📰 {city_clean.upper()}:\n"
             
-            return res[:250]
+            # On essaie d'ajouter le plus de news possible sans dépasser 200 chars
+            for n in city_news:
+                # Si l'ajout de la news dépasse la limite, on s'arrête
+                if len(res) + len(n) + 1 > 195:
+                    # On tronque la dernière si elle est vraiment importante ou on arrête
+                    break
+                res += f"{n}\n"
+            
+            return res.strip()
         except Exception as e:
             logger.error(f"Erreur actu {city}: {e}")
-            return f"❌ Erreur lors de la recherche pour {city}."
+            return f"❌ Erreur actu {city}."
