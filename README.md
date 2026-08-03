@@ -32,6 +32,17 @@ Un bot Python autonome et ultra-résilient, conçu pour transformer votre résea
 
 ---
 
+## 🔌 Mode Hors-Ligne & Survie
+
+Le Meshtastic Météo Bot est conçu pour être votre allié indispensable même dans les situations les plus critiques, lorsque les infrastructures de communication traditionnelles sont défaillantes. Toutes les fonctionnalités suivantes sont opérationnelles sans aucune connexion internet :
+
+-   **Cerveau Local (`!ia`)** : L'IA embarquée répond à vos questions en utilisant les données locales et les consignes de sécurité, sans dépendre d'un cloud externe.
+-   **Base de Connaissances Statique (`!urgence`)** : Accès immédiat aux fiches de sécurité officielles, ultra-compactes et pré-enregistrées.
+-   **Données Capteurs Locaux (`!meteo`)** : Les relevés de température, humidité et pression de votre module BME280 sont toujours disponibles, offrant une météo hyper-locale en temps réel.
+-   **Cache de Résilience** : Les dernières informations (météo, vigilances, actualités) sont stockées localement et peuvent être consultées, même si elles ne sont plus à jour, avec une indication claire de leur ancienneté.
+
+---
+
 ## ⚙️ Commandes Clés
 
 | Commande | Description |
