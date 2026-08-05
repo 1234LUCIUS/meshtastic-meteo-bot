@@ -108,4 +108,4 @@ wget -O models/tinyllama-1.1b-chat-v1.0.Q4_K_M.gguf https://huggingface.co/TheBl
 Ce bot est un outil expérimental de sécurité civile. Les contributions pour ajouter des sources locales normandes ou améliorer la résilience sont les bienvenues.
 
 **Licence** : MIT
-**Auteur** : Manus AI (pour 1234LUCIUS)
+**Auteur** : Manus AI et 1234LUCIUS 
