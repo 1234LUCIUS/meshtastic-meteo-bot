@@ -79,6 +79,9 @@ class BotController:
         forecast = self.meteo_service.get_forecast(
             DEFAULT_LATITUDE, DEFAULT_LONGITUDE, location_name=city_name
         )
+        local_data = self.client.local_telemetry.get("local")
+        if local_data and forecast:
+            forecast["local_sensor"] = local_data
         return self.meteo_service.format_current_weather(forecast)
 
     def get_weather_broadcast_message(self) -> str:

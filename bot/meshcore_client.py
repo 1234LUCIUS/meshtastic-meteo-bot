@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import threading
+import time
 from typing import Callable, Optional
 
 try:
@@ -26,6 +27,7 @@ from bot.config import (
     MESHCORE_TCP_HOST,
     MESHCORE_TCP_PORT,
     MESHCORE_SERIAL_PORT,
+    MESHCORE_TELEMETRY_INTERVAL,
 )
 
 logger = logging.getLogger(__name__)
@@ -51,6 +53,7 @@ class MeshCoreClient:
         self._thread: Optional[threading.Thread] = None
         self._ready = threading.Event()
         self._subscriptions = []
+        self._telemetry_task: Optional[asyncio.Task] = None
 
     def connect(self) -> bool:
         if self.simulation_mode:
@@ -110,6 +113,8 @@ class MeshCoreClient:
                 self.meshcore.subscribe(EventType.CHANNEL_MSG_RECV, self._on_channel_message)
             )
             await self.meshcore.start_auto_message_fetching()
+            await self._refresh_self_telemetry()
+            self._telemetry_task = asyncio.create_task(self._telemetry_loop())
             self.connected = True
             logger.info("Connexion MeshCore établie avec succès (%s).", MESHCORE_CONNECTION_TYPE)
             return True
@@ -139,6 +144,59 @@ class MeshCoreClient:
             self.on_message_callback(sender, text, packet)
         except Exception:
             logger.exception("Erreur dans le callback de message MeshCore")
+
+    async def _telemetry_loop(self):
+        """Rafraîchit périodiquement les capteurs locaux du nœud MeshCore."""
+        while True:
+            await asyncio.sleep(max(10, MESHCORE_TELEMETRY_INTERVAL))
+            await self._refresh_self_telemetry()
+
+    async def _refresh_self_telemetry(self):
+        """Lit la télémétrie CayenneLPP locale et la convertit pour le bot."""
+        if not self.meshcore:
+            return
+        try:
+            result = await self.meshcore.commands.get_self_telemetry()
+            if result.type == EventType.ERROR:
+                logger.debug("Télémétrie MeshCore indisponible : %s", result.payload)
+                return
+            sensor = self._parse_telemetry(result.payload)
+            if sensor:
+                sensor["timestamp"] = time.time()
+                self.local_telemetry["local"] = sensor
+                logger.debug("Télémétrie BME280 MeshCore reçue : %s", sensor)
+        except Exception:
+            # Certains firmwares MeshCore ou nœuds sans capteur ne proposent
+            # pas cette commande ; cela ne doit pas interrompre le bot.
+            logger.debug("Lecture télémétrie MeshCore impossible", exc_info=True)
+
+    @staticmethod
+    def _parse_telemetry(payload: dict) -> dict:
+        """Convertit une réponse CayenneLPP en format local commun."""
+        lpp = (payload or {}).get("lpp", [])
+        if isinstance(lpp, dict):
+            lpp = lpp.get("data", [])
+        values = {}
+        type_names = {
+            103: "temperature",
+            104: "humidity",
+            115: "pressure",
+        }
+        for item in lpp or []:
+            if not isinstance(item, dict):
+                continue
+            kind = item.get("type")
+            if isinstance(kind, int):
+                key = type_names.get(kind)
+            elif isinstance(kind, str) and kind in {"temperature", "humidity", "pressure", "barometer"}:
+                key = kind
+            else:
+                key = None
+            if key == "barometer":
+                key = "pressure"
+            if key and item.get("value") is not None:
+                values[key] = item["value"]
+        return values
 
     def send_text(
         self,
@@ -188,6 +246,10 @@ class MeshCoreClient:
                 self._thread.join(timeout=10)
 
     async def _disconnect_async(self):
+        if self._telemetry_task:
+            self._telemetry_task.cancel()
+            await asyncio.gather(self._telemetry_task, return_exceptions=True)
+            self._telemetry_task = None
         if self.meshcore:
             try:
                 await self.meshcore.stop_auto_message_fetching()

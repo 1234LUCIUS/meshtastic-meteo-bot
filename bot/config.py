@@ -23,6 +23,7 @@ MESHCORE_TCP_HOST = os.getenv("MESHCORE_TCP_HOST", "localhost")
 MESHCORE_TCP_PORT = int(os.getenv("MESHCORE_TCP_PORT", "4000"))
 MESHCORE_BLE_ADDRESS = os.getenv("MESHCORE_BLE_ADDRESS", "")
 MESHCORE_BLE_PIN = os.getenv("MESHCORE_BLE_PIN", "")
+MESHCORE_TELEMETRY_INTERVAL = int(os.getenv("MESHCORE_TELEMETRY_INTERVAL", "300"))
 
 # --- Paramètres météo (Défaut : Normandie / Caen) ---
 DEFAULT_DEPARTMENT = os.getenv("DEFAULT_DEPARTMENT", "14")

@@ -35,6 +35,7 @@ MESH_NETWORK=meshcore
 MESHCORE_CONNECTION_TYPE=ble
 MESHCORE_BLE_ADDRESS=
 MESHCORE_BLE_PIN=
+MESHCORE_TELEMETRY_INTERVAL=300
 ```
 
 L’adresse peut rester vide pour laisser la bibliothèque effectuer le scan. Le PIN est facultatif.
@@ -60,7 +61,18 @@ Les réponses aux commandes sont envoyées sur le canal MeshCore d’origine lor
 - alertes planifiées ;
 - connexions Série, TCP et BLE ;
 - reconnexion automatique fournie par la bibliothèque ;
+- lecture périodique de la télémétrie locale BME280 ;
 - mode simulation ;
 - détection automatique du firmware.
 
 MeshCore ne fournit pas les paquets Meshtastic `decoded.position` et `decoded.telemetry` au même format. Les commandes qui nécessitent une position utilisent donc la position par défaut lorsque l’événement MeshCore ne contient pas de GPS.
+
+## BME280
+
+Le bot appelle `get_self_telemetry()` au démarrage puis toutes les `MESHCORE_TELEMETRY_INTERVAL` secondes. Les trames CayenneLPP sont converties vers le format commun du bot :
+
+- type 103 : température en °C ;
+- type 104 : humidité relative en % ;
+- type 115 : pression en hPa.
+
+Les valeurs sont placées dans `local_telemetry["local"]` et sont ajoutées automatiquement aux réponses `!meteo` lorsque le nœud retourne ces mesures. Le mode environnemental de télémétrie doit être activé dans le firmware MeshCore et un BME280 doit être correctement raccordé ; sinon le bot continue de fonctionner avec les données météo distantes.
