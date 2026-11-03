@@ -16,8 +16,9 @@ import signal
 import sys
 import time
 
-from bot.config import setup_logging
+from bot.config import MESH_NETWORK, setup_logging
 from bot.meshtastic_client import MeshtasticClient
+from bot.meshcore_client import MeshCoreClient
 from bot.controller import BotController
 from bot.scheduler import BotScheduler
 
@@ -32,6 +33,12 @@ def parse_args():
         "--simulate",
         action="store_true",
         help="Démarre en mode simulation (sans matériel Meshtastic réel).",
+    )
+    parser.add_argument(
+        "--network",
+        choices=("meshtastic", "meshcore"),
+        default=MESH_NETWORK,
+        help="Réseau radio à utiliser (défaut : MESH_NETWORK).",
     )
     parser.add_argument(
         "--test-meteo",
@@ -131,7 +138,8 @@ def main():
         args.test_meteo, args.test_alertes, args.test_crues, args.test_officiel
     ])
 
-    client = MeshtasticClient(simulation_mode=simulation)
+    client_class = MeshCoreClient if args.network == "meshcore" else MeshtasticClient
+    client = client_class(simulation_mode=simulation)
 
     # Initialisation du contrôleur
     controller = BotController(client)

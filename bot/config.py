@@ -9,10 +9,20 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# --- Connexion Meshtastic ---
+# --- Réseau et connexion Meshtastic ---
+MESH_NETWORK = os.getenv("MESH_NETWORK", "meshtastic").lower()
 MESHTASTIC_CONNECTION_TYPE = os.getenv("MESHTASTIC_CONNECTION_TYPE", "serial").lower()
 MESHTASTIC_SERIAL_PORT = os.getenv("MESHTASTIC_SERIAL_PORT", "/dev/ttyUSB0")
 MESHTASTIC_TCP_HOST = os.getenv("MESHTASTIC_TCP_HOST", "localhost")
+
+# --- Connexion MeshCore ---
+MESHCORE_CONNECTION_TYPE = os.getenv("MESHCORE_CONNECTION_TYPE", "serial").lower()
+MESHCORE_SERIAL_PORT = os.getenv("MESHCORE_SERIAL_PORT", "/dev/ttyUSB0")
+MESHCORE_BAUDRATE = int(os.getenv("MESHCORE_BAUDRATE", "115200"))
+MESHCORE_TCP_HOST = os.getenv("MESHCORE_TCP_HOST", "localhost")
+MESHCORE_TCP_PORT = int(os.getenv("MESHCORE_TCP_PORT", "4000"))
+MESHCORE_BLE_ADDRESS = os.getenv("MESHCORE_BLE_ADDRESS", "")
+MESHCORE_BLE_PIN = os.getenv("MESHCORE_BLE_PIN", "")
 
 # --- Paramètres météo (Défaut : Normandie / Caen) ---
 DEFAULT_DEPARTMENT = os.getenv("DEFAULT_DEPARTMENT", "14")

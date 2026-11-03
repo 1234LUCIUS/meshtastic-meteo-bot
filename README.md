@@ -1,10 +1,13 @@
-# 📡 Meshtastic Météo Bot (Spécial Normandie & Résilience)
+# 📡 Meshtastic / MeshCore Météo Bot (Spécial Normandie & Résilience)
 
 [![Python](https://img.shields.io/badge/Python-3.10%2B-blue)](https://python.org)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Meshtastic](https://img.shields.io/badge/Meshtastic-2.3.14-green)](https://meshtastic.org)
+[![MeshCore](https://img.shields.io/badge/MeshCore-2.3.17-green)](https://github.com/meshcore-dev/meshcore_py)
 
-Un bot Python autonome et ultra-résilient, conçu pour transformer votre réseau Meshtastic en une véritable passerelle de sécurité civile pour la **Normandie**. Il fonctionne même en cas de coupure internet totale.
+Un bot Python autonome et ultra-résilient, conçu pour transformer votre réseau Meshtastic ou MeshCore en une véritable passerelle de sécurité civile pour la **Normandie**. Il fonctionne même en cas de coupure internet totale.
+
+Le même contrôleur métier fonctionne avec les deux réseaux. Choisissez le backend avec `MESH_NETWORK=meshtastic` ou `MESH_NETWORK=meshcore` dans `.env`, ou utilisez `python main.py --network meshcore`. MeshCore utilise son API Python officielle et ses messages de canal ; les valeurs `BROADCAST_CHANNEL` et `ALERT_CHANNEL` correspondent aux index de canaux MeshCore.
 
 ---
 
@@ -62,7 +65,7 @@ Le Meshtastic Météo Bot est conçu pour être votre allié indispensable même
 
 ### 1. Prérequis
 -   **Python 3.10 ou supérieur**
--   Un **nœud Meshtastic** connecté en USB/Série, TCP ou BLE.
+-   Un **nœud Meshtastic** connecté en USB/Série ou TCP, ou un **nœud MeshCore companion** connecté en Série, TCP ou BLE.
 
 ### 2. Installation
 
@@ -89,13 +92,15 @@ mkdir -p models
 wget -O models/tinyllama-1.1b-chat-v1.0.Q4_K_M.gguf https://huggingface.co/TheBloke/TinyLlama-1.1B-Chat-v1.0-GGUF/resolve/main/tinyllama-1.1b-chat-v1.0.Q4_K_M.gguf?download=true
 ```
 
-**Lancement :** `python main.py`
+**Lancement Meshtastic :** `python main.py`
+
+**Lancement MeshCore :** configurez `MESHCORE_CONNECTION_TYPE` et les paramètres associés dans `.env`, puis exécutez `python main.py --network meshcore`.
 
 ---
 
 ## 🏗️ Architecture du Projet
 
--   `bot/` : Cœur du système (Client Meshtastic, Commandes, Scheduler).
+-   `bot/` : Cœur du système (clients Meshtastic/MeshCore, Commandes, Scheduler).
 -   `services/` : Modules spécialisés (Météo, Vigilance, Web Search, Emergency, **Local AI**).
 -   `data/` : Base de données SQLite pour le cache hors-ligne.
 -   `models/` : Contient le modèle GGUF de l'IA locale.

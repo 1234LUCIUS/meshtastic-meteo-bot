@@ -61,7 +61,9 @@ class CommandParser:
             "!secours": self._cmd_urgence,
             "!consigne": self._cmd_urgence,
             "!canal": self._cmd_canal,
-        }ef handle(self, sender_id: str, text: str, packet: dict) -> Optional[str]:
+        }
+
+    def handle(self, sender_id: str, text: str, packet: dict) -> Optional[str]:
         """
         Traite un message reçu.
 

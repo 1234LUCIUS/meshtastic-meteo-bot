@@ -2,7 +2,7 @@ FROM python:3.11-slim
 
 # Métadonnées
 LABEL maintainer="Meshtastic Météo Bot"
-LABEL description="Bot Meshtastic de diffusion météo et alertes officielles françaises"
+LABEL description="Bot Meshtastic/MeshCore de diffusion météo et alertes officielles françaises"
 LABEL version="1.0.0"
 
 # Répertoire de travail
