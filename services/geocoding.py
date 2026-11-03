@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 NOMINATIM_BASE_URL = "https://nominatim.openstreetmap.org"
 REQUEST_TIMEOUT = 10
-USER_AGENT = "MeshtasticMeteoBotFrance/1.0 (github.com/meshtastic-meteo-bot)"
+USER_AGENT = "BotMeteoMTMCFrance/1.0 (github.com/1234LUCIUS/meshtastic-meteo-bot)"
 
 # Cache simple pour éviter les requêtes répétées
 _geocode_cache: dict = {}

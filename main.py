@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Meshtastic Météo Bot — Point d'entrée principal.
+Bot météo MT/MC — Point d'entrée principal.
 
 Lance le bot en mode normal (avec matériel Meshtastic) ou en mode simulation.
 
@@ -26,7 +26,7 @@ logger = setup_logging()
 
 def parse_args():
     parser = argparse.ArgumentParser(
-        description="Meshtastic Météo Bot — Diffusion météo et alertes sur réseau mesh."
+        description="Bot météo MT/MC — Diffusion météo et alertes sur réseau mesh."
     )
     parser.add_argument(
         "--simulate",
@@ -129,7 +129,7 @@ def main():
     args = parse_args()
 
     logger.info("=" * 60)
-    logger.info("  Meshtastic Météo Bot — Démarrage")
+    logger.info("  Bot météo MT/MC — Démarrage")
     logger.info("=" * 60)
 
     # Initialisation du client Meshtastic
@@ -183,7 +183,7 @@ def main():
 
     # Message de démarrage sur le réseau
     startup_msg = (
-        f"📡 Météo-Bot actif ({client.firmware}) ! Commandes : "
+        f"📡 Bot météo MT/MC actif ({client.firmware}) ! Commandes : "
         "!meteo [ville] | !alertes | !crues | !officiel | !aide"
     )
     client.send_text(startup_msg)

@@ -1,4 +1,4 @@
-# 📡 Meshtastic / MeshCore Météo Bot (Spécial Normandie & Résilience)
+# 📡 Bot météo MT/MC (Spécial Normandie & Résilience)
 
 [![Python](https://img.shields.io/badge/Python-3.10%2B-blue)](https://python.org)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
@@ -37,7 +37,7 @@ Le même contrôleur métier fonctionne avec les deux réseaux. Par défaut, le 
 
 ## 🔌 Mode Hors-Ligne & Survie
 
-Le Meshtastic Météo Bot est conçu pour être votre allié indispensable même dans les situations les plus critiques, lorsque les infrastructures de communication traditionnelles sont défaillantes. Toutes les fonctionnalités suivantes sont opérationnelles sans aucune connexion internet :
+Le Bot météo MT/MC est conçu pour être votre allié indispensable même dans les situations les plus critiques, lorsque les infrastructures de communication traditionnelles sont défaillantes. Toutes les fonctionnalités suivantes sont opérationnelles sans aucune connexion internet :
 
 -   **Cerveau Local (`!ia`)** : L'IA embarquée répond à vos questions en utilisant les données locales et les consignes de sécurité, sans dépendre d'un cloud externe.
 -   **Base de Connaissances Statique (`!urgence`)** : Accès immédiat aux fiches de sécurité officielles, ultra-compactes et pré-enregistrées.

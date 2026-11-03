@@ -1,1 +1,1 @@
-# Tests du Meshtastic Météo Bot
+# Tests du Bot météo MT/MC

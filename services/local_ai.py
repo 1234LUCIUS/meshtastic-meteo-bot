@@ -1,5 +1,5 @@
 """
-Service d'IA locale hors-ligne pour Meshtastic Météo Bot.
+Service d'IA locale hors-ligne pour le Bot météo MT/MC.
 Utilise llama-cpp-python pour l'inférence locale.
 """
 

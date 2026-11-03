@@ -1,5 +1,5 @@
 """
-Tests unitaires des services du Meshtastic Météo Bot.
+Tests unitaires des services du Bot météo MT/MC.
 Utilise des mocks pour éviter les appels réseau réels.
 """
 

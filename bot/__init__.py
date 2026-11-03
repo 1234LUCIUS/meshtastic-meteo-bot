@@ -1,1 +1,1 @@
-# Bot Meshtastic Météo — Module principal
+# Bot météo MT/MC — Module principal

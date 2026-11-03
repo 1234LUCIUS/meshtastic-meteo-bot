@@ -1,7 +1,7 @@
 version: "3.8"
 
 services:
-  # Bot Meshtastic Météo — connexion TCP à un nœud Meshtastic
+  # Bot météo MT/MC — connexion TCP à un nœud Meshtastic
   meteo-bot:
     build: .
     container_name: meshtastic-meteo-bot
@@ -36,7 +36,7 @@ services:
     networks:
       - mesh-network
 
-  # Bot Meshtastic Météo — connexion série (Raspberry Pi / Linux)
+  # Bot météo MT/MC — connexion série (Raspberry Pi / Linux)
   # Décommentez ce service pour une connexion USB/série
   # meteo-bot-serial:
   #   build: .

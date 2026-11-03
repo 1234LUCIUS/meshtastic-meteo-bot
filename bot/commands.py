@@ -168,7 +168,7 @@ class CommandParser:
 
     def _cmd_ping(self, sender_id: str, args: str, packet: dict) -> str:
         """Commande !ping"""
-        return f"Pong! Météo-Bot actif. [{sender_id}]"
+        return f"Pong! Bot météo MT/MC actif. [{sender_id}]"
 
     def _cmd_urgence(self, sender_id: str, args: str, packet: dict) -> str:
         """Commande !urgence [thème]"""
