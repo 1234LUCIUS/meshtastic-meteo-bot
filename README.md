@@ -9,14 +9,16 @@ Un bot Python autonome et ultra-résilient, conçu pour transformer votre résea
 
 Le même contrôleur métier fonctionne avec les deux réseaux. Par défaut, le bot détecte automatiquement le firmware du matériel connecté : il essaie le protocole MeshCore puis Meshtastic. Le backend peut aussi être forcé avec `MESH_NETWORK=meshtastic`, `MESH_NETWORK=meshcore` ou les options `--network auto|meshtastic|meshcore`. MeshCore utilise son API Python officielle et ses messages de canal ; les valeurs `BROADCAST_CHANNEL` et `ALERT_CHANNEL` correspondent aux index de canaux MeshCore.
 
+La documentation est séparée par firmware : [options Meshtastic](docs/meshtastic.md), [options MeshCore](docs/meshcore.md) et [commandes communes](docs/README.md).
+
 ---
 
 ## 🌟 Fonctionnalités Avancées
 
-### 🧠 IA Locale Hors-Ligne (`!ia`)
--   **Raisonnement Autonome** : Intègre un modèle de langage léger (TinyLlama-1.1B) pour répondre intelligemment aux questions des utilisateurs, même sans connexion internet.
--   **Contexte Local** : L'IA utilise les données du cache (météo, alertes, capteurs BME280) pour fournir des réponses pertinentes et concises.
--   **Optimisé Meshtastic** : Réponses en français, limitées à moins de 200 caractères pour une diffusion efficace sur le réseau.
+### 🧩 Deux backends radio
+-   **Meshtastic** : connexion série/USB ou TCP, messages texte, GPS et télémétrie environnementale.
+-   **MeshCore** : connexion série/USB, TCP ou BLE, messages de canal et réponse sur le canal d’origine.
+-   **Détection automatique** : le firmware est testé au démarrage et affiché dans les logs.
 
 ### 🛡️ Résilience Hors-Ligne (Mode Crise)
 -   **Cache Local SQLite** : Sauvegarde automatique de la dernière météo, des vigilances et des actualités. En cas de coupure réseau, le bot diffuse les dernières infos connues (marquées par ⌛).
@@ -39,7 +41,6 @@ Le même contrôleur métier fonctionne avec les deux réseaux. Par défaut, le 
 
 Le Bot météo MT/MC est conçu pour être votre allié indispensable même dans les situations les plus critiques, lorsque les infrastructures de communication traditionnelles sont défaillantes. Toutes les fonctionnalités suivantes sont opérationnelles sans aucune connexion internet :
 
--   **Cerveau Local (`!ia`)** : L'IA embarquée répond à vos questions en utilisant les données locales et les consignes de sécurité, sans dépendre d'un cloud externe.
 -   **Base de Connaissances Statique (`!urgence`)** : Accès immédiat aux fiches de sécurité officielles, ultra-compactes et pré-enregistrées.
 -   **Données Capteurs Locaux (`!meteo`)** : Les relevés de température, humidité et pression de votre module BME280 sont toujours disponibles, offrant une météo hyper-locale en temps réel.
 -   **Cache de Résilience** : Les dernières informations (météo, vigilances, actualités) sont stockées localement et peuvent être consultées, même si elles ne sont plus à jour, avec une indication claire de leur ancienneté.
@@ -56,7 +57,6 @@ Le Bot météo MT/MC est conçu pour être votre allié indispensable même dans
 | `!actu <ville>` | Actualités locales importantes + Liens courts |
 | `!normandie` | Scan SDIS et Préfectures (Sécurité) |
 | `!canal <0-7>` | Change le canal de diffusion périodique |
-| `!ia <question>` | **Question à l'IA locale (Hors-ligne)** |
 | `!aide` | Liste complète des commandes |
 
 ---
@@ -92,8 +92,6 @@ mkdir -p models
 wget -O models/tinyllama-1.1b-chat-v1.0.Q4_K_M.gguf https://huggingface.co/TheBloke/TinyLlama-1.1B-Chat-v1.0-GGUF/resolve/main/tinyllama-1.1b-chat-v1.0.Q4_K_M.gguf?download=true
 ```
 
-**Lancement Meshtastic :** `python main.py`
-
 **Lancement avec détection automatique :** configurez le type de connexion et les paramètres associés dans `.env`, puis exécutez `python main.py`. Le firmware détecté est affiché dans les logs et dans le message de démarrage du bot.
 
 **Lancement MeshCore forcé :** configurez `MESHCORE_CONNECTION_TYPE` et les paramètres associés dans `.env`, puis exécutez `python main.py --network meshcore`.
@@ -103,6 +101,7 @@ wget -O models/tinyllama-1.1b-chat-v1.0.Q4_K_M.gguf https://huggingface.co/TheBl
 ## 🏗️ Architecture du Projet
 
 -   `bot/` : Cœur du système (clients Meshtastic/MeshCore, Commandes, Scheduler).
+-   `docs/` : Guides séparés des options Meshtastic, MeshCore et des commandes communes.
 -   `services/` : Modules spécialisés (Météo, Vigilance, Web Search, Emergency, **Local AI**).
 -   `data/` : Base de données SQLite pour le cache hors-ligne.
 -   `models/` : Contient le modèle GGUF de l'IA locale.
