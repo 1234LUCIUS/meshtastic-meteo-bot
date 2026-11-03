@@ -17,9 +17,8 @@ import sys
 import time
 
 from bot.config import MESH_NETWORK, setup_logging
-from bot.meshtastic_client import MeshtasticClient
-from bot.meshcore_client import MeshCoreClient
 from bot.controller import BotController
+from bot.network import connect_network_client
 from bot.scheduler import BotScheduler
 
 logger = setup_logging()
@@ -36,7 +35,7 @@ def parse_args():
     )
     parser.add_argument(
         "--network",
-        choices=("meshtastic", "meshcore"),
+        choices=("auto", "meshtastic", "meshcore"),
         default=MESH_NETWORK,
         help="Réseau radio à utiliser (défaut : MESH_NETWORK).",
     )
@@ -138,8 +137,13 @@ def main():
         args.test_meteo, args.test_alertes, args.test_crues, args.test_officiel
     ])
 
-    client_class = MeshCoreClient if args.network == "meshcore" else MeshtasticClient
-    client = client_class(simulation_mode=simulation)
+    client = connect_network_client(args.network, simulation_mode=simulation)
+    if client is None:
+        logger.error(
+            "Aucun firmware compatible détecté (MeshCore ou Meshtastic). "
+            "Vérifiez le matériel et la configuration de connexion."
+        )
+        sys.exit(1)
 
     # Initialisation du contrôleur
     controller = BotController(client)
@@ -152,14 +156,7 @@ def main():
         run_tests(args, controller)
         return
 
-    # Connexion au nœud Meshtastic
-    if not client.connect():
-        if not simulation:
-            logger.error(
-                "Impossible de se connecter au nœud Meshtastic. "
-                "Vérifiez la connexion ou utilisez --simulate pour le mode test."
-            )
-            sys.exit(1)
+    logger.info("Firmware réseau utilisé : %s", client.firmware)
 
     # Initialisation du planificateur
     scheduler = BotScheduler(controller)
@@ -186,7 +183,7 @@ def main():
 
     # Message de démarrage sur le réseau
     startup_msg = (
-        "📡 Météo-Bot actif ! Commandes : "
+        f"📡 Météo-Bot actif ({client.firmware}) ! Commandes : "
         "!meteo [ville] | !alertes | !crues | !officiel | !aide"
     )
     client.send_text(startup_msg)

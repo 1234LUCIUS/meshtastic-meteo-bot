@@ -44,6 +44,7 @@ class MeshtasticClient:
         :param simulation_mode: Si True, simule la connexion sans matériel réel.
         """
         self.interface = None
+        self.firmware = "meshtastic"
         self.on_message_callback = on_message
         self.simulation_mode = simulation_mode
         self.connected = False

@@ -192,7 +192,15 @@ class BotController:
             if response:
                 logger.info(f"Réponse générée : {response[:50]}...")
                 # Réponse ultra-simplifiée pour test de réception
-                success = self.client.send_text(response, destination="^all")
+                # MeshCore est orienté messages de canal : répondre sur le
+                # canal reçu conserve le comportement attendu pour toutes les
+                # commandes, y compris celles envoyées sur un canal secondaire.
+                channel_index = packet.get("channel")
+                success = self.client.send_text(
+                    response,
+                    destination="^all",
+                    channel_index=channel_index,
+                )
                 if success:
                     logger.info("Réponse publique envoyée avec succès.")
                 else:

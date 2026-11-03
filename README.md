@@ -7,7 +7,7 @@
 
 Un bot Python autonome et ultra-résilient, conçu pour transformer votre réseau Meshtastic ou MeshCore en une véritable passerelle de sécurité civile pour la **Normandie**. Il fonctionne même en cas de coupure internet totale.
 
-Le même contrôleur métier fonctionne avec les deux réseaux. Choisissez le backend avec `MESH_NETWORK=meshtastic` ou `MESH_NETWORK=meshcore` dans `.env`, ou utilisez `python main.py --network meshcore`. MeshCore utilise son API Python officielle et ses messages de canal ; les valeurs `BROADCAST_CHANNEL` et `ALERT_CHANNEL` correspondent aux index de canaux MeshCore.
+Le même contrôleur métier fonctionne avec les deux réseaux. Par défaut, le bot détecte automatiquement le firmware du matériel connecté : il essaie le protocole MeshCore puis Meshtastic. Le backend peut aussi être forcé avec `MESH_NETWORK=meshtastic`, `MESH_NETWORK=meshcore` ou les options `--network auto|meshtastic|meshcore`. MeshCore utilise son API Python officielle et ses messages de canal ; les valeurs `BROADCAST_CHANNEL` et `ALERT_CHANNEL` correspondent aux index de canaux MeshCore.
 
 ---
 
@@ -94,7 +94,9 @@ wget -O models/tinyllama-1.1b-chat-v1.0.Q4_K_M.gguf https://huggingface.co/TheBl
 
 **Lancement Meshtastic :** `python main.py`
 
-**Lancement MeshCore :** configurez `MESHCORE_CONNECTION_TYPE` et les paramètres associés dans `.env`, puis exécutez `python main.py --network meshcore`.
+**Lancement avec détection automatique :** configurez le type de connexion et les paramètres associés dans `.env`, puis exécutez `python main.py`. Le firmware détecté est affiché dans les logs et dans le message de démarrage du bot.
+
+**Lancement MeshCore forcé :** configurez `MESHCORE_CONNECTION_TYPE` et les paramètres associés dans `.env`, puis exécutez `python main.py --network meshcore`.
 
 ---
 

@@ -10,7 +10,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # --- Réseau et connexion Meshtastic ---
-MESH_NETWORK = os.getenv("MESH_NETWORK", "meshtastic").lower()
+MESH_NETWORK = os.getenv("MESH_NETWORK", "auto").lower()
 MESHTASTIC_CONNECTION_TYPE = os.getenv("MESHTASTIC_CONNECTION_TYPE", "serial").lower()
 MESHTASTIC_SERIAL_PORT = os.getenv("MESHTASTIC_SERIAL_PORT", "/dev/ttyUSB0")
 MESHTASTIC_TCP_HOST = os.getenv("MESHTASTIC_TCP_HOST", "localhost")

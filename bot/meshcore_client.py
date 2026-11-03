@@ -5,7 +5,6 @@ from __future__ import annotations
 import asyncio
 import logging
 import threading
-import time
 from typing import Callable, Optional
 
 try:
@@ -42,6 +41,7 @@ class MeshCoreClient:
 
     def __init__(self, on_message: Optional[Callable] = None, simulation_mode: bool = False):
         self.meshcore = None
+        self.firmware = "meshcore"
         self.on_message_callback = on_message
         self.simulation_mode = simulation_mode
         self.connected = False
